@@ -1,26 +1,26 @@
-{ config, pkgs, ... };
+{ config, pkgs, ... }:
 
 {
  home.username = "root";
- home.homeDirectory = "/home/root";
+ home.homeDirectory = "/root";
  home.stateVersion = "26.05";
 
- home.packages = with pkgs: [
-   neovim
+ home.packages = with pkgs; [
    git
    zellij
    fzf
    zoxide
    ripgrep
    bat
-   exa
+   eza
    curl
    wget
  ];
 
  programs.zsh = { 
    enable = true;
-   defaultEditor = "nvim";
+   enableCompletion = true;
+   autosuggestion.enable = true;
 
    oh-my-zsh = {
     enable = true;
@@ -45,4 +45,4 @@
  };
 
  programs.home-manager.enable = true;
-};
+}

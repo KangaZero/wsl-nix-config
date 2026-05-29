@@ -16,7 +16,7 @@ inputs = {
     hostname = "KangaZero";
     in
     {
-	homeConfigurations."${username}@${hostname}" = home-manager.lib.homeManagerConfiguration {
+	homeConfigurations."${username}" = home-manager.lib.homeManagerConfiguration {
 	pkgs = import nixpkgs { inherit system; };
 
 	modules = [./home.nix];
