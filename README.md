@@ -1,6 +1,13 @@
 # WSL Arch + Nix Home-Manager Flake
 
-KangaZero's dotfile/env flake. Runs on Arch (WSL2). Manage user pkgs + zsh + neovim via [home-manager](https://github.com/nix-community/home-manager).
+KangaZero's dotfile/env flake. Runs on Arch (WSL2). Manage user pkgs via [home-manager](https://github.com/nix-community/home-manager).
+
+
+## Defaults
+- Shell: `zsh`
+- Editor: `neovim` # My actual neovim config is not included.
+- Tooling for languages: `typescript`, `python`, `rust` #technically most popular languages are possible due to `mise`
+- Terminal: `alacritty` #config not included as it in exists in the Windows file directory
 
 ---
 

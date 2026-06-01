@@ -9,9 +9,7 @@
 
     packages = with pkgs; [
       git
-      zellij
       fzf
-      yazi
       zoxide
       ripgrep
       bat
@@ -22,6 +20,13 @@
       tldr
       ffmpeg-full
       unzip
+      fd
+      jq
+      btop
+      # Quality of life tools
+      yazi
+      zellij
+      lazygit
       # Font
       nerd-fonts.jetbrains-mono
       # Package managers
@@ -96,6 +101,7 @@
       enable = true;
       defaultEditor = true;
       #This is needed to use the default .config/nvim/init.lua way to configure nvim
+      #INFO: I manage neovim's config the default way, too lazy to configure with Nix
       sideloadInitLua = true;
     };
   };
