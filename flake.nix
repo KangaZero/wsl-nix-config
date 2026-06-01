@@ -1,23 +1,21 @@
-
 {
 
   description = "WSL - Arch + Nix Flake by KangaZero";
 
-
-
   inputs = {
-
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
-
     home-manager = {
-
-      url = "github:nix-community/home-manager";
-
+      #NOTE: Currently at 26.11 for unstable creating a mismatch
+      url = "github:nix-community/home-manager/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
-
     };
 
-#TODO add in nvim config repo when ready
+    git-hooks = {
+      url = "github:cachix/git-hooks.nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    #TODO add in nvim config repo when ready
     # dotfiles-mac = {
     #
     #   url = "github:KangaZero/dotfiles-mac";
@@ -28,33 +26,54 @@
     #
   };
 
-
-
-#add in nvim repo inputs when ready
-  outputs = { self, nixpkgs, home-manager}:
+  #add in nvim repo inputs when ready
+  outputs =
+    {
+      self,
+      nixpkgs,
+      home-manager,
+      git-hooks,
+    }:
 
     let
 
       system = "x86_64-linux";
-
       username = "root";
+      # Commented as it is an unused declaration/variable
+      # hostname = "KangaZero";
 
-      hostname = "KangaZero";
+      pkgs = import nixpkgs {
+        inherit system;
+        config.allowUnfree = true;
+      };
 
     in
 
     {
 
+      checks.${system}.pre-commit-check = git-hooks.lib.${system}.run {
+        src = ./.;
+        hooks = {
+          nixfmt-rfc-style.enable = true;
+          statix.enable = true;
+          deadnix.enable = true;
+        };
+      };
+
+      devShells.${system}.default = pkgs.mkShell {
+        inherit (self.checks.${system}.pre-commit-check) shellHook;
+        buildInputs = self.checks.${system}.pre-commit-check.enabledPackages;
+      };
+
       homeConfigurations."${username}" = home-manager.lib.homeManagerConfiguration {
 
-        pkgs = import nixpkgs { inherit system; };
+        inherit pkgs;
 
         modules = [
 
           {
-
             imports = [ ./home.nix ];
-#add in nvim repo when ready
+            #add in nvim repo when ready
             # _module.args.dotfiles-mac = dotfiles-mac;
 
           }
@@ -66,4 +85,3 @@
     };
 
 }
-

@@ -1,68 +1,95 @@
-{ config, pkgs, ... }:
+# { config, pkgs, ... }:
+{ pkgs, ... }:
 
 {
- home.username = "root";
- home.homeDirectory = "/root";
- home.stateVersion = "26.05";
+  home = {
+    username = "root";
+    homeDirectory = "/root";
+    stateVersion = "26.05";
 
- home.packages = with pkgs; [
-   git
-   zellij
-   fzf
-   yazi
-   zoxide
-   ripgrep
-   bat
-   eza
-   curl
-   wget
-   openssh
-   tldr
-# Font
-   nerd-fonts.jetbrains-mono
-# Package managers
-   nodejs_26
-   pnpm
-   rustup
-   python3
-   mise
-   ffmpeg-full
- ];
-
- programs.home-manager.enable = true;
-  programs.zsh = { 
-   enable = true;
-   enableCompletion = true;
-   autosuggestion.enable = true;
-   syntaxHighlighting.enable = true;
-
-   oh-my-zsh = {
-    enable = true;
-    plugins = [
-	    "git"
-	    "fzf"
-	    "colorize"
-	    "z"
-	    "history"
-    ]; 
-    };
-history = {
-   size = 10000;
-   ignoreAllDups = true;
-   path = "$HOME/.cache/zsh/history";
+    packages = with pkgs; [
+      git
+      zellij
+      fzf
+      yazi
+      zoxide
+      ripgrep
+      bat
+      eza
+      curl
+      wget
+      openssh
+      tldr
+      ffmpeg-full
+      unzip
+      # Font
+      nerd-fonts.jetbrains-mono
+      # Package managers
+      nodejs_26
+      pnpm
+      rustup
+      python3
+      mise
+      uv
+      just
+      # The forbidden fruit
+      claude-code
+    ];
   };
 
- };
+  programs = {
+    home-manager.enable = true;
+    zsh = {
+      enable = true;
+      enableCompletion = true;
+      autosuggestion.enable = true;
+      syntaxHighlighting.enable = true;
 
-programs.neovim = {
- enable = true;
- defaultEditor = true;
- #This is needed to use the default .config/nvim/init.lua way to configure nvim
- sideloadInitLua = true;
- };
-# home.file.".config/nvim" = {
-# source = "${dofiles-mac}/nvim-min";
-#   recursive = true;
-# };
+      sessionVariables = {
+        CATPPUCCIN_FLAVOR = "mocha"; # Options: mocha, frappe, macchiato, latte
+        CATPPUCCIN_SHOW_TIME = "true"; # Adds current time to the prompt
+        CATPPUCCIN_SHOW_HOSTNAME = "always"; # Options: never, always, ssh
+      };
+
+      shellAliases = {
+        editNix = "z ~/.config/home-manager && nvim flake.nix";
+        nixRebuild = "(z ~/.config/home-manager && home-manager switch)";
+      };
+
+      oh-my-zsh = {
+        enable = true;
+        theme = "catppuccin";
+        plugins = [
+          "git"
+          "fzf"
+          "colorize"
+          "z"
+          "history"
+        ];
+        custom = "${pkgs.fetchFromGitHub {
+          owner = "JannoTjarks";
+          repo = "catppuccin-zsh";
+          rev = "main";
+          sha256 = "sha256-w6uw8q54kQV2lwVSK3JjQ93slPt0OCvQMeZClyEFdwY=";
+        }}";
+      };
+      history = {
+        size = 10000;
+        ignoreAllDups = true;
+        path = "$HOME/.cache/zsh/history";
+      };
+    };
+
+    neovim = {
+      enable = true;
+      defaultEditor = true;
+      #This is needed to use the default .config/nvim/init.lua way to configure nvim
+      sideloadInitLua = true;
+    };
+  };
+  # home.file.".config/nvim" = {
+  # source = "${dofiles-mac}/nvim-min";
+  #   recursive = true;
+  # };
 
 }
