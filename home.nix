@@ -1,6 +1,16 @@
-{ ... }:
+{ pkgs, lib, ... }:
 
 {
+  # INFO: see https://nlewo.github.io/nixos-manual-sphinx/development/assertions.xml.html
+  config = lib.mkIf (!pkgs.stdenv.hostPlatform.isx86_64 || !pkgs.stdenv.hostPlatform.isLinux) {
+    assertions = [
+      {
+        assertion = false;
+        message = "This config only supports x86_64-linux, got: ${pkgs.stdenv.hostPlatform.system}";
+      }
+    ];
+  };
+
   imports = [
     ./modules/packages.nix
     ./modules/bash.nix
