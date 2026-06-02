@@ -8,6 +8,7 @@
     ./modules/neovim.nix
     ./modules/nix-settings.nix
     ./modules/gc.nix
+    ./modules/git.nix
   ];
 
   home = {

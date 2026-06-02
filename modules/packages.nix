@@ -2,7 +2,6 @@
 
 {
   home.packages = with pkgs; [
-    git
     fzf
     zoxide
     ripgrep
@@ -21,7 +20,7 @@
     yazi
     zellij
     lazygit
-    # Font
+    # Font - note this does not do anything as we are in WSL, so need to unfortunately imperatively download and set the font on Windows
     nerd-fonts.jetbrains-mono
     # Package managers
     nodejs_26
@@ -31,6 +30,7 @@
     mise
     uv
     just
+    azure-cli
     # The forbidden fruit
     claude-code
   ];
