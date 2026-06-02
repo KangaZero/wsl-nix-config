@@ -6,7 +6,7 @@
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     home-manager = {
       #NOTE: Currently at 26.11 for unstable creating a mismatch
-      url = "github:nix-community/home-manager/release-26.05";
+      url = "github:nix-community/home-manager/master";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 

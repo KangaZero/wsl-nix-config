@@ -30,7 +30,7 @@
     mise
     uv
     just
-    azure-cli
+    (azure-cli.withExtensions [ azure-cli-extensions.azure-devops ])
     # The forbidden fruit
     claude-code
   ];
