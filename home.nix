@@ -1,16 +1,6 @@
 { pkgs, lib, ... }:
 
 {
-  # INFO: see https://nlewo.github.io/nixos-manual-sphinx/development/assertions.xml.html
-  config = lib.mkIf (!pkgs.stdenv.hostPlatform.isx86_64 || !pkgs.stdenv.hostPlatform.isLinux) {
-    assertions = [
-      {
-        assertion = false;
-        message = "This config only supports x86_64-linux, got: ${pkgs.stdenv.hostPlatform.system}";
-      }
-    ];
-  };
-
   imports = [
     ./modules/packages.nix
     ./modules/bash.nix
@@ -21,11 +11,25 @@
     ./modules/git.nix
   ];
 
-  home = {
-    username = "root";
-    homeDirectory = "/root";
-    stateVersion = "26.05";
-  };
+  # INFO: see https://nlewo.github.io/nixos-manual-sphinx/development/assertions.xml.html
+  config = lib.mkMerge [
+    {
+      home = {
+        username = "root";
+        homeDirectory = "/root";
+        stateVersion = "26.11";
+      };
 
-  programs.home-manager.enable = true;
+      programs.home-manager.enable = true;
+    }
+
+    (lib.mkIf (!pkgs.stdenv.hostPlatform.isx86_64 || !pkgs.stdenv.hostPlatform.isLinux) {
+      assertions = [
+        {
+          assertion = false;
+          message = "This config only supports x86_64-linux, got: ${pkgs.stdenv.hostPlatform.system}";
+        }
+      ];
+    })
+  ];
 }
