@@ -44,7 +44,8 @@
 
       pkgs = import nixpkgs {
         inherit system;
-        config.allowUnfree = true;
+        config.allowUnfreePredicate = pkg: builtins.elem (pkgs.lib.getName pkg) [ "claude-code" ];
+        # config.allowUnfree = true;
       };
 
     in
