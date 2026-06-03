@@ -21,6 +21,8 @@
       };
 
       programs.home-manager.enable = true;
+      # Won't do anything on WSL, but idk i just wanna pretend that I am using 100% linux
+      fonts.fontconfig.enable = true;
     }
 
     (lib.mkIf (!pkgs.stdenv.hostPlatform.isx86_64 || !pkgs.stdenv.hostPlatform.isLinux) {
