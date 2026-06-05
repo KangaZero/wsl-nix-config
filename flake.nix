@@ -15,6 +15,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    nixos-wsl = {
+      url = "github:nix-community/NixOS-WSL/main";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     #TODO add in nvim config repo when ready
     # dotfiles-mac = {
     #
@@ -33,6 +38,7 @@
       nixpkgs,
       home-manager,
       git-hooks,
+      nixos-wsl,
     }:
 
     let
@@ -64,6 +70,20 @@
       devShells.${system}.default = pkgs.mkShell {
         inherit (self.checks.${system}.pre-commit-check) shellHook;
         buildInputs = self.checks.${system}.pre-commit-check.enabledPackages;
+      };
+
+      nixosConfigurations."nixos" = nixpkgs.lib.nixosSystem {
+        inherit system;
+        modules = [
+          nixos-wsl.nixosModules.wsl
+          ./configuration.nix
+          home-manager.nixosModules.home-manager
+          {
+            home-manager.useGlobalPkgs = true;
+            home-manager.useUserPackages = true;
+            home-manager.users."${username}" = import ./home.nix;
+          }
+        ];
       };
 
       homeConfigurations."${username}" = home-manager.lib.homeManagerConfiguration {
