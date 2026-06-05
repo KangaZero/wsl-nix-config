@@ -15,7 +15,7 @@ a single flake.
 - Shell: `zsh` (oh-my-zsh + catppuccin)
 - Editor: `neovim` — set as `EDITOR` system-wide; config lives outside Nix at `~/.config/nvim` (sideloaded)
 - Languages/tooling: `typescript` (nodejs 26 + pnpm), `python` (+ `uv`), `rust` (rustup); version mgmt via `mise`
-- Terminal: `alacritty` (config not included — lives in the Windows filesystem)
+- Terminal: `kitty` (declarative — Tokyo Night Moon theme, `modules/kitty.nix`). An `alacritty` config also exists in the Windows filesystem.
 
 ---
 
@@ -33,7 +33,8 @@ a single flake.
 │   ├── zsh.nix                    # zsh + oh-my-zsh + catppuccin + aliases
 │   ├── direnv.nix                 # direnv + nix-direnv (auto-loads the devShell)
 │   ├── neovim.nix                 # neovim, defaultEditor, sideloads ~/.config/nvim
-│   └── git.nix                    # global git identity + sane defaults
+│   ├── git.nix                    # global git identity + sane defaults
+│   └── kitty.nix                  # kitty terminal — Tokyo Night Moon, declarative
 ├── .envrc                         # `use flake` → direnv loads devShell + installs pre-commit hook
 ├── .github/workflows/ci.yml       # GitHub Actions: nix flake check (lint) + system dry-build
 ├── .gitignore                     # ignores result*, .direnv/, generated pre-commit config
@@ -286,6 +287,7 @@ Edit the relevant file:
 - Bash trampoline → `modules/bash.nix`
 - direnv → `modules/direnv.nix`
 - Global git identity → `modules/git.nix`
+- Kitty terminal → `modules/kitty.nix`
 
 New tool/program → create `modules/<name>.nix` and add it to the `imports` list
 in `home.nix` (user scope) or to `configuration.nix` (system scope).

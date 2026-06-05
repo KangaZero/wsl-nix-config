@@ -8,6 +8,7 @@
     ./modules/direnv.nix
     ./modules/neovim.nix
     ./modules/git.nix
+    ./modules/kitty.nix
   ];
 
   # INFO: see https://nlewo.github.io/nixos-manual-sphinx/development/assertions.xml.html
