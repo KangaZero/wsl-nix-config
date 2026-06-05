@@ -20,9 +20,10 @@
   
   nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [ "claude-code" ];
   
-  nix.settings.experimental-features = [
-   "nix-command" "flakes"
-];
+  nix.settings = {
+    experimental-features = [ "nix-command" "flakes" ];
+    allow-dirty-locks = false;
+  };
 
   nix.gc = {
     automatic = true;

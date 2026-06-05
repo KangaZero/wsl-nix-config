@@ -14,8 +14,8 @@
     };
 
     shellAliases = {
-      editNix = "z ~/.config/home-manager && nvim flake.nix";
-      nixRebuild = "(z ~/.config/home-manager && home-manager switch)";
+      editNix = "z /etc/nixos && sudo nvim flake.nix";
+      nixRebuild = "(z ~/etc/nixos && sudo nixos-rebuild switch --flake .)";
       cheatsheet-az = ''
         cat <<'EOF' | bat --language=md --style=plain
         # Azure DevOps CLI cheatsheet

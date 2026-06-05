@@ -7,7 +7,6 @@
     ./modules/zsh.nix
     ./modules/direnv.nix
     ./modules/neovim.nix
-    ./modules/nix-settings.nix
     ./modules/git.nix
   ];
 

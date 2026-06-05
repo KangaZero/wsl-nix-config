@@ -1,6 +1,6 @@
 {
 
-  description = "WSL - Arch + Nix Flake by KangaZero";
+  description = "WSL - NixOS + Home-manager by KangaZero";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
