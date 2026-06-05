@@ -24,6 +24,12 @@
    "nix-command" "flakes"
 ];
 
+  nix.gc = {
+    automatic = true;
+    dates = "weekly";
+    options = "--delete-generations +30";
+  };
+
   environment.systemPackages = [ pkgs.git pkgs.vim];
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions
