@@ -5,7 +5,11 @@
 # NixOS-WSL specific options are documented on the NixOS-WSL repository:
 # https://github.com/nix-community/NixOS-WSL
 
-{ config, lib, pkgs, ... }:
+{
+  lib,
+  pkgs,
+  ...
+}:
 
 {
   wsl.enable = true;
@@ -17,11 +21,14 @@
   };
 
   security.sudo.wheelNeedsPassword = false;
-  
+
   nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [ "claude-code" ];
-  
+
   nix.settings = {
-    experimental-features = [ "nix-command" "flakes" ];
+    experimental-features = [
+      "nix-command"
+      "flakes"
+    ];
     allow-dirty-locks = false;
   };
 
@@ -31,7 +38,22 @@
     options = "--delete-generations +30";
   };
 
-  environment.systemPackages = [ pkgs.git pkgs.vim];
+  # Make `sudo nvim` (root) use KangaZero's neovim config.
+  # nvim reads $HOME/.config/nvim; root's HOME is /root, so point it at the
+  # same dotfiles the user's HM symlink uses. Runs on every activation.
+  system.activationScripts.rootNvimConfig = ''
+    mkdir -p /root/.config
+    ln -sfn /home/KangaZero/Documents/dotfiles-mac/nvim-min /root/.config/nvim
+  '';
+
+  # Default editor for all users (root included)
+  environment.variables.EDITOR = "nvim";
+
+  environment.systemPackages = [
+    pkgs.git
+    pkgs.vim
+    pkgs.neovim
+  ];
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions
   # on your system were taken. It's perfectly fine and recommended to leave
