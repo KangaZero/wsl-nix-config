@@ -15,6 +15,8 @@
   wsl.enable = true;
   wsl.defaultUser = "KangaZero";
 
+  time.timeZone = "Asia/Tokyo";
+
   users.users.KangaZero = {
     isNormalUser = true;
     extraGroups = [ "wheel" ];
