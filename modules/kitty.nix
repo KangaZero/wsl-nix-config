@@ -85,7 +85,7 @@
       dynamic_background_opacity = true;
       # Sideloaded from dotfiles (same pattern as nvim); not reproducible if that
       # path moves. Migrate into a flake input alongside the nvim config later.
-      background_image = "/home/KangaZero/Documents/dotfiles-mac/kitty/cat-watching-the-star_pixelart_purple_animated.gif";
+      background_image = "../assets/stars.png";
       background_image_layout = "scaled";
       background_tint = "0.85";
 
