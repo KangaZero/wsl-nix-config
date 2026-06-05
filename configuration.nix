@@ -41,6 +41,7 @@
   # Make `sudo nvim` (root) use KangaZero's neovim config.
   # nvim reads $HOME/.config/nvim; root's HOME is /root, so point it at the
   # same dotfiles the user's HM symlink uses. Runs on every activation.
+  # WARNING: Very bad to do this, will eventually have a truly declarative way to add in my nvim config
   system.activationScripts.rootNvimConfig = ''
     mkdir -p /root/.config
     ln -sfn /home/KangaZero/Documents/dotfiles-mac/nvim-min /root/.config/nvim
