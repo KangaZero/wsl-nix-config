@@ -44,7 +44,7 @@
     let
 
       system = "x86_64-linux";
-      username = "root";
+      username = "KangaZero";
       # Commented as it is an unused declaration/variable
       # hostname = "KangaZero";
 

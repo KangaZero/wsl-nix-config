@@ -16,8 +16,8 @@
   config = lib.mkMerge [
     {
       home = {
-        username = "root";
-        homeDirectory = "/root";
+        username = "KangaZero";
+        homeDirectory = "/home/KangaZero";
         stateVersion = "26.11";
       };
 

@@ -9,9 +9,9 @@
 
 {
   wsl.enable = true;
-  wsl.defaultUser = "root";
+  wsl.defaultUser = "KangaZero";
 
-  users.users.root = {
+  users.users.KangaZero = {
     isSystemUser = true;
   };
 
