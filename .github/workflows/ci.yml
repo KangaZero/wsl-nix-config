@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Cancel superseded runs on the same ref to save CI minutes.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Installs Nix with flakes + nix-command pre-enabled. Actively maintained,
+      # the standard installer for CI.
+      - uses: DeterminateSystems/nix-installer-action@main
+
+      # Optional binary cache to speed up repeat runs. Uncomment + set secrets if
+      # you create a cache at https://app.cachix.org.
+      # - uses: cachix/cachix-action@v15
+      #   with:
+      #     name: kangazero-nixos
+      #     authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+
+      # Runs the flake's own checks = the SAME nixfmt + statix + deadnix the local
+      # pre-commit hook runs. Single source of truth, no duplicated lint config.
+      - name: Lint + format (nixfmt, statix, deadnix)
+        run: nix flake check -L
+
+      # Dry-build the NixOS system: full evaluation + build plan, no compilation.
+      # Equivalent of `nixos-rebuild dry-build` but works on a non-NixOS runner.
+      - name: Dry-build NixOS system
+        run: |
+          nix build --dry-run -L \
+            '.#nixosConfigurations.nixos.config.system.build.toplevel'
