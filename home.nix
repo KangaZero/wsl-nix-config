@@ -5,6 +5,7 @@
     ./modules/packages.nix
     ./modules/bash.nix
     ./modules/zsh.nix
+    ./modules/direnv.nix
     ./modules/neovim.nix
     ./modules/nix-settings.nix
     ./modules/gc.nix
