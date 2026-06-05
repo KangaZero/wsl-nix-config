@@ -12,7 +12,8 @@
   wsl.defaultUser = "KangaZero";
 
   users.users.KangaZero = {
-    isSystemUser = true;
+    isNormalUser = true;
+    extraGroups = [ "wheel" ];
   };
 
   security.sudo.wheelNeedsPassword = false;
