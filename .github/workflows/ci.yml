@@ -32,6 +32,15 @@ jobs:
       - name: Lint + format (nixfmt, statix, deadnix)
         run: nix flake check -L
 
+      # Build the home-manager activationPackage directly. This is the same
+      # check the local `home-build` pre-push hook runs, but it lives here
+      # because `nix build` can't run inside the `nix flake check` sandbox
+      # (recursive nix has no `nix` binary/daemon available).
+      - name: Build home-manager activation
+        run: |
+          nix build --no-link -L \
+            '.#homeConfigurations.KangaZero.activationPackage'
+
       # Dry-build the NixOS system: full evaluation + build plan, no compilation.
       # Equivalent of `nixos-rebuild dry-build` but works on a non-NixOS runner.
       - name: Dry-build NixOS system

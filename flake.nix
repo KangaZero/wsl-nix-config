@@ -67,8 +67,16 @@
 
           # Build the home-manager config so a broken module (rofi/dunst/polybar
           # rasi/ini, missing ';', shellcheck failures in writeShellApplication)
-          # fails the commit instead of slipping through. Runs only when *.nix
+          # fails locally instead of slipping through. Runs only when *.nix
           # changes. Cached, so it's near-instant when nothing relevant moved.
+          #
+          # Scoped to the pre-push stage on purpose: this hook shells out to
+          # `nix build`, which cannot run inside the `nix flake check` sandbox
+          # (no `nix` binary / daemon there -> "Executable `nix` not found").
+          # `pre-commit run --all-files`, which the flake check uses, only fires
+          # pre-commit-stage hooks, so keeping this on pre-push lets CI's flake
+          # check pass while still guarding pushes locally. CI builds the same
+          # activationPackage directly in its own step (see .github/workflows).
           home-build = {
             enable = true;
             name = "home-manager activationPackage builds";
@@ -76,6 +84,7 @@
             language = "system";
             files = "\\.nix$";
             pass_filenames = false;
+            stages = [ "pre-push" ];
           };
         };
       };
