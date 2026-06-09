@@ -1,14 +1,10 @@
 # WSL NixOS + Home-Manager Flake
 
-KangaZero's system + dotfile flake. Runs on **NixOS-WSL** (WSL2), migrated from Arch.
-The whole machine is declarative now: the **system** is managed by NixOS
-(`configuration.nix`) and **user packages/dotfiles** by
+KangaZero's system + dotfile flake. Runs on **NixOS-WSL** (WSL2). The whole
+machine is declarative: the **system** is managed by NixOS (`configuration.nix`)
+and **user packages/dotfiles** by
 [home-manager](https://github.com/nix-community/home-manager), wired together in
 a single flake.
-
-> Migration note: previously this was a Nix + home-manager setup running *on top
-> of* Arch (WSL). It is now a full **NixOS-WSL** distro — Nix manages the OS
-> itself. The old Arch install steps are gone; see [NixOS-WSL Setup](#nixos-wsl-setup).
 
 ## Defaults
 
@@ -16,6 +12,9 @@ a single flake.
 - Editor: `neovim` — set as `EDITOR` system-wide; config lives outside Nix at `~/.config/nvim` (sideloaded)
 - Languages/tooling: `typescript` (nodejs 26 + pnpm), `python` (+ `uv`), `rust` (rustup); version mgmt via `mise`
 - Terminal: `kitty` (declarative — Tokyo Night Moon theme, `modules/kitty.nix`). An `alacritty` config also exists in the Windows filesystem.
+- Desktop: **i3** X11 tiling WM over **xrdp**, reachable from Windows Remote Desktop — a full Linux GUI on WSL. See [i3 Desktop](#i3-desktop-run-linux-as-its-own-desktop).
+- Bar / notifications / launcher: `polybar` + `dunst` + `rofi`, all **Catppuccin Mocha** (`modules/i3/`).
+- Browser: `firefox` Developer Edition, declarative via `programs.firefox` (`modules/firefox.nix`) — policy hardening + Vimium.
 
 ---
 
@@ -27,14 +26,23 @@ a single flake.
 ├── flake.lock                     # pinned input revs (commit me)
 ├── configuration.nix              # NixOS SYSTEM config (users, nix settings, gc, editor, root nvim)
 ├── home.nix                       # home-manager entry point: identity + module imports
+├── services/
+│   └── xrdp-i3.nix                # SYSTEM: xrdp (port 3390) + Xorg + i3 — the Linux desktop
 ├── modules/
 │   ├── packages.nix               # home.packages (cli tools, langs, claude-code)
 │   ├── bash.nix                   # bash → zsh trampoline (safety net)
-│   ├── zsh.nix                    # zsh + oh-my-zsh + catppuccin + aliases
+│   ├── zsh.nix                    # zsh + oh-my-zsh + catppuccin + aliases (incl. restart-xrdp)
 │   ├── direnv.nix                 # direnv + nix-direnv (auto-loads the devShell)
 │   ├── neovim.nix                 # neovim, defaultEditor, sideloads ~/.config/nvim
 │   ├── git.nix                    # global git identity + sane defaults
-│   └── kitty.nix                  # kitty terminal — Tokyo Night Moon, declarative
+│   ├── kitty.nix                  # kitty terminal — Tokyo Night Moon, declarative
+│   ├── firefox.nix                # firefox Dev Edition — programs.firefox policies + Vimium
+│   └── i3/                        # i3 desktop (Catppuccin Mocha)
+│       ├── default.nix            # i3 config: keybinds, gaps, autostart, wallpaper
+│       ├── rofi.nix               # rofi: launcher/powermenu/cheatsheet themes + modes
+│       ├── dunst.nix              # dunst notification daemon
+│       └── polybar.nix            # polybar status bar (replaces i3bar)
+├── assets/                        # wallpapers / images referenced by configs (kitty bg, etc.)
 ├── .envrc                         # `use flake` → direnv loads devShell + installs pre-commit hook
 ├── .github/workflows/ci.yml       # GitHub Actions: nix flake check (lint) + system dry-build
 ├── .gitignore                     # ignores result*, .direnv/, generated pre-commit config
@@ -46,11 +54,11 @@ a single flake.
 Key facts:
 
 - `flake.nix` → `system = x86_64-linux`, `username = "KangaZero"`. Two outputs of note:
-  - `nixosConfigurations."nixos"` — the system (NixOS-WSL module + `configuration.nix` + home-manager as a NixOS module).
+  - `nixosConfigurations."nixos"` — the system (NixOS-WSL module + `configuration.nix` + `services/xrdp-i3.nix` + home-manager as a NixOS module).
   - `homeConfigurations."KangaZero"` — standalone home-manager (for `home-manager switch` without a full system rebuild).
 - `nixpkgs` follows `nixos-unstable`. `home-manager` tracks `master` (kept in lockstep with unstable).
 - **System Nix settings live in `configuration.nix`** (`nix.settings`, `nix.gc`) — *not* in a separate module. The old `modules/nix-settings.nix` was consolidated and removed.
-- Pre-commit hooks: `deadnix`, `nixfmt`, `statix` — wired via the `git-hooks.nix` flake input, installed by the devShell.
+- Pre-commit hooks: `deadnix`, `nixfmt`, `statix`, **and a home-manager build** (`home-build` — builds `homeConfigurations.KangaZero.activationPackage` so a broken module/rasi/shellcheck fails the commit) — wired via the `git-hooks.nix` flake input, installed by the devShell.
 - CI: GitHub Actions (`.github/workflows/ci.yml`) runs `nix flake check` + a system dry-build on every push to `main` and on PRs.
 - The repo lives at **`/etc/nixos`** and is owned by `KangaZero` (chowned from root) so `git`, `direnv`, `nix develop`, and the pre-commit hook all work without `sudo`.
 
@@ -135,8 +143,12 @@ home-manager switch --flake .#KangaZero
 ### Shell aliases (from `modules/zsh.nix`)
 
 ```bash
-nixRebuild    # rebuild the system: sudo nixos-rebuild switch --flake /etc/nixos#nixos
-editNix       # jump to /etc/nixos and edit flake.nix via sudoedit (uses $EDITOR)
+nixRebuild        # rebuild the system: sudo nixos-rebuild switch --flake /etc/nixos#nixos
+editNix           # jump to /etc/nixos and edit flake.nix via sudoedit (uses $EDITOR)
+nixRebuildStatus  # show an in-progress/stuck activation (transient unit + procs)
+nixRebuildKill    # abort a stuck activation and free its unit name
+restart-xrdp      # reap ALL leaked xrdp sessions, then restart xrdp + xrdp-sesman
+ff                # launch firefox detached from the shell
 ```
 
 ### Dev shell + pre-commit hooks
@@ -150,7 +162,8 @@ nix develop          # entering the shell installs .git/hooks/pre-commit
 Because `modules/direnv.nix` enables `direnv` + `nix-direnv` and `.envrc`
 contains `use flake`, simply `cd /etc/nixos` auto-loads the devShell (run
 `direnv allow` once). The hook then fires on every `git commit`:
-`deadnix` → `nixfmt` → `statix`.
+`deadnix` → `nixfmt` → `statix` → `home-build` (builds the home-manager
+generation, so a broken config can't be committed).
 
 ### Update inputs
 
@@ -176,6 +189,100 @@ nix-collect-garbage -d            # user profile generations too
 sudo nixos-rebuild switch --rollback        # previous generation
 sudo nixos-rebuild list-generations         # inspect available generations
 ```
+
+---
+
+## i3 Desktop (run Linux as its own desktop)
+
+A full **X11 i3 tiling desktop**, served over **xrdp** and opened from the Windows
+Remote Desktop client — so WSL gives you a real Linux GUI, not just a terminal.
+i3 is X11-native, so it sidesteps the GL/Wayland-nesting problems of Wayland WMs
+under WSL.
+
+```
+Windows mstsc  ──RDP:3390──▶  xrdp ──▶ its own Xorg (:10, :11, …) ──▶ i3 session
+```
+
+### System side — `services/xrdp-i3.nix`
+
+Imported by `nixosConfigurations.nixos`. Enables Xorg, the i3 window manager, and
+xrdp on **port 3390**:
+
+```nix
+services.xserver.enable = true;
+services.xserver.windowManager.i3.enable = true;
+services.xrdp = {
+  enable = true;
+  defaultWindowManager = "i3";
+  port = 3390;          # NOT 3389 — that's Windows' own RDP port (mstsc clash)
+  openFirewall = true;
+};
+```
+
+> Why 3390: `localhost:3389` hits **Windows'** RDP service (error 0x708 / console
+> clash). WSL's xrdp listens on **3390**.
+
+### Connect from Windows
+
+1. Rebuild so xrdp is running: `sudo nixos-rebuild switch --flake .#nixos`.
+2. Open **Remote Desktop Connection** (`mstsc`) → connect to **`localhost:3390`**.
+3. Log in with your NixOS username/password → you land in i3.
+
+(First login to a fresh user needs a password: `sudo passwd KangaZero`.)
+
+### User side — `modules/i3/`
+
+| File | What |
+|---|---|
+| `default.nix` | i3 config: keybinds, gaps, Catppuccin Mocha colors, autostart (wallpaper, dunst, greenclip, polybar) |
+| `rofi.nix`    | rofi launcher + powermenu/cheatsheet/applet themes, and `window`/`combi`/`calc`/`clipboard` modes |
+| `dunst.nix`   | dunst notification daemon (Mocha) |
+| `polybar.nix` | polybar status bar — rounded "island" pills (workspaces/window/cpu/mem/disk/net/clock), replaces i3bar |
+
+Wallpaper is pinned with `fetchurl` and set via `feh --bg-fill` in the i3 autostart.
+
+### Keybinds (`$mod` = **Alt**)
+
+Super/Win is eaten by Windows over RDP, so the mod key is **Alt**.
+
+| Key | Action |
+|---|---|
+| `$mod+Return` | terminal (kitty) |
+| `$mod+d` | app launcher (rofi) |
+| `$mod+Tab` | window switcher |
+| `$mod+Shift+d` | combi (apps + run + windows) |
+| `$mod+c` | calculator (rofi-calc) |
+| `$mod+Shift+v` | clipboard history (greenclip) |
+| `$mod+Shift+e` | power menu |
+| `$mod+Shift+/` | **keybinding cheatsheet** |
+| `$mod+Shift+q` | kill window |
+| `$mod+h/j/k/l` | focus · `+Shift` to move |
+| `$mod+1..9` | workspaces · `+Shift` to move window |
+| `$mod+f` / `$mod+space` | fullscreen / floating toggle |
+| `$mod+Shift+r` / `$mod+Shift+c` | restart / reload i3 |
+
+rofi navigation is **vim-style**: `Ctrl+j/k` down/up, `Ctrl+h/l` columns.
+
+### Restart / troubleshoot
+
+xrdp keeps disconnected sessions alive, so reconnecting **stacks** new
+`Xorg + i3 + polybar` instances. The `restart-xrdp` alias reaps them all and
+restarts the listeners:
+
+```bash
+restart-xrdp     # pkill leaked Xorg/i3/polybar/greenclip/chansrv, then restart xrdp
+```
+
+| Symptom | Fix |
+|---|---|
+| Apps fail with `connect() : Connection refused`, `DISPLAY=:0` | That's the dead **WSLg** display. i3 runs on a separate xrdp Xorg — launch apps from **inside** i3 (rofi/keybind) so they get the session's `DISPLAY`. |
+| Wallpaper / polybar background renders black | No compositor on xrdp; polybar uses pseudo-transparency off the wallpaper. If the wallpaper itself is black, the WSLg compositor is dead → `wsl --shutdown` from Windows. |
+| Multiple cursors / duplicate bars after reconnecting | Leaked sessions — run `restart-xrdp`, then reconnect for one clean session. |
+| polybar icons show as boxes (□) | Nerd Font glyph missing — `fc-cache -f` then reconnect. |
+
+> WSL limits: no compositor (so no true transparency/blur), `$mod` is Alt (not
+> Super), and a dead WSLg `:0` only affects apps launched outside the xrdp
+> session.
 
 ---
 
@@ -288,6 +395,9 @@ Edit the relevant file:
 - direnv → `modules/direnv.nix`
 - Global git identity → `modules/git.nix`
 - Kitty terminal → `modules/kitty.nix`
+- Firefox (policies + extensions) → `modules/firefox.nix`
+- i3 desktop (keybinds, bar, launcher, notifications, wallpaper) → `modules/i3/`
+- xrdp / X server (the desktop transport) → `services/xrdp-i3.nix`
 
 New tool/program → create `modules/<name>.nix` and add it to the `imports` list
 in `home.nix` (user scope) or to `configuration.nix` (system scope).
@@ -309,6 +419,8 @@ Apply: `sudo nixos-rebuild switch --flake .#nixos`.
 | `sudo nvim` uses vanilla config | Root config symlink missing — re-run `sudo nixos-rebuild switch`. Or use `sudoedit`. |
 | WSL drops into bash on launch | Set `users.users.<name>.shell = pkgs.zsh` (Option A) or rely on the bash trampoline. Then `wsl --shutdown`. |
 | Flake ignores a new file | The flake only sees git-tracked files. `git add` it before rebuilding. |
+| Can't connect via Remote Desktop | xrdp listens on **3390** (not 3389). Rebuild, then `mstsc` → `localhost:3390`. See [i3 Desktop](#i3-desktop-run-linux-as-its-own-desktop). |
+| Stacked bars/cursors or `Connection refused` after reconnecting RDP | Leaked xrdp sessions — run `restart-xrdp`, then reconnect for one clean session. |
 
 ---
 
