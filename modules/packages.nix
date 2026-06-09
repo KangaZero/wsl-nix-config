@@ -20,7 +20,7 @@
     yazi
     zellij
     lazygit
-    # Font - note this does not do anything as we are in WSL, so need to unfortunately imperatively download and set the font on Windows
+    # Font - Used in i3 and Kitty
     nerd-fonts.jetbrains-mono
     # Package managers
     nodejs_26
@@ -33,7 +33,6 @@
     (azure-cli.withExtensions [ azure-cli-extensions.azure-devops ])
     # The forbidden fruit
     claude-code
-    # Browser
-    firefox-devedition
+    # Browser: firefox-devedition is now managed declaratively in ./firefox.nix
   ];
 }

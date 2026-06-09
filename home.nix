@@ -9,6 +9,7 @@
     ./modules/neovim.nix
     ./modules/git.nix
     ./modules/kitty.nix
+    ./modules/firefox.nix
     ./modules/i3/default.nix
   ];
 

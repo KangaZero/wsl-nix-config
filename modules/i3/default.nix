@@ -1,7 +1,17 @@
 { pkgs, ... }:
+let
+  # Wallpaper pinned from dharmx/walls (reproducible, no blob in repo).
+  # Refresh hash: nix store prefetch-file --json <url>
+  wallpaper = pkgs.fetchurl {
+    url = "https://raw.githubusercontent.com/dharmx/walls/main/outrun/a_street_with_buildings_and_signs.png";
+    hash = "sha256-J3hVCXKFxIJPftHrvxMZ3fG6lwA2SjOLaHD96BxExUs=";
+  };
+in
 {
   imports = [
     ./rofi.nix
+    ./dunst.nix
+    ./polybar.nix
   ];
 
   home.packages = with pkgs; [
@@ -47,11 +57,19 @@
     hide_edge_borders smart
 
     # --- autostart ---
-    exec --no-startup-id ${pkgs.feh}/bin/feh --bg-solid "#1e1e2e"
+    exec --no-startup-id ${pkgs.feh}/bin/feh --bg-fill ${wallpaper}
+    exec --no-startup-id ${pkgs.dunst}/bin/dunst
+    exec --no-startup-id greenclip daemon
+    exec_always --no-startup-id polybar-start
 
     # --- launch ---
     bindsym $mod+Return exec ${pkgs.kitty}/bin/kitty
-    bindsym $mod+d exec ${pkgs.rofi}/bin/rofi -show drun
+    bindsym $mod+d exec rofi -show drun
+    bindsym $mod+Tab exec rofi -show window
+    bindsym $mod+Shift+d exec rofi -show combi
+    bindsym $mod+c exec rofi -show calc -modi calc -no-show-match -no-sort
+    bindsym $mod+Shift+v exec rofi -modi "clipboard:greenclip print" -show clipboard -theme ~/.config/rofi/applet.rasi -theme-str 'listview { lines: 10; } window { width: 700px; }'
+    bindsym $mod+Shift+slash exec rofi-cheatsheet
     bindsym $mod+Shift+q kill
 
     # --- focus (vim keys + arrows) ---
@@ -98,7 +116,7 @@
     # --- session ---
     bindsym $mod+Shift+c reload
     bindsym $mod+Shift+r restart
-    bindsym $mod+Shift+e exec ${pkgs.i3}/bin/i3-nagbar -t warning -m 'Exit i3?' -B 'Yes' '${pkgs.i3}/bin/i3-msg exit'
+    bindsym $mod+Shift+e exec rofi-powermenu
 
     # --- resize mode ---
     bindsym $mod+r mode "resize"
@@ -111,51 +129,7 @@
         bindsym Escape mode "default"
     }
 
-    # --- status bar (Catppuccin Mocha) ---
-    bar {
-        status_command ${pkgs.i3status}/bin/i3status
-        position top
-        font pango:JetBrainsMono Nerd Font 10
-        colors {
-            background $base
-            statusline $text
-            separator  $overlay0
-            # class            border    bg        text
-            focused_workspace  $lavender $lavender $crust
-            active_workspace   $surface0 $surface0 $text
-            inactive_workspace $base     $base     $text
-            urgent_workspace   $peach    $peach    $crust
-            binding_mode       $peach    $peach    $crust
-        }
-    }
-  '';
-
-  # --- i3status ---
-  xdg.configFile."i3status/config".text = ''
-    general {
-        colors = true
-        interval = 5
-        color_good = "#a6e3a1"
-        color_degraded = "#f9e2af"
-        color_bad = "#f38ba8"
-    }
-
-    order += "cpu_usage"
-    order += "memory"
-    order += "tztime local"
-
-    cpu_usage {
-        format = "  %usage"
-    }
-
-    memory {
-        format = "  %used"
-        threshold_degraded = "1G"
-        format_degraded = "MEMORY < %available"
-    }
-
-    tztime local {
-        format = "  %Y-%m-%d   %H:%M"
-    }
+    # --- status bar: polybar (see ./polybar.nix), launched via exec_always above.
+    #     No i3 bar {} block — polybar replaces i3bar entirely. ---
   '';
 }

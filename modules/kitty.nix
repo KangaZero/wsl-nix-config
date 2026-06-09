@@ -83,9 +83,11 @@
       background_opacity = "0.85";
       transparent_background_colors = "red@0.5 #00ff00@0.3";
       dynamic_background_opacity = true;
-      # Sideloaded from dotfiles (same pattern as nvim); not reproducible if that
-      # path moves. Migrate into a flake input alongside the nvim config later.
-      background_image = "../assets/stars.png";
+      # Nix-path interpolation copies assets/stars.png into the store and emits
+      # an absolute path. A relative "../assets/stars.png" does NOT work: kitty
+      # resolves it against ~/.config/kitty/, i.e. ~/.config/assets/stars.png,
+      # which home-manager never creates.
+      background_image = "${../assets/stars.png}";
       background_image_layout = "scaled";
       background_tint = "0.85";
 

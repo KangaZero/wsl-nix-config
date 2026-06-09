@@ -64,6 +64,19 @@
           nixfmt.enable = true;
           statix.enable = true;
           deadnix.enable = true;
+
+          # Build the home-manager config so a broken module (rofi/dunst/polybar
+          # rasi/ini, missing ';', shellcheck failures in writeShellApplication)
+          # fails the commit instead of slipping through. Runs only when *.nix
+          # changes. Cached, so it's near-instant when nothing relevant moved.
+          home-build = {
+            enable = true;
+            name = "home-manager activationPackage builds";
+            entry = "nix build --no-link --print-build-logs .#homeConfigurations.${username}.activationPackage";
+            language = "system";
+            files = "\\.nix$";
+            pass_filenames = false;
+          };
         };
       };
 
