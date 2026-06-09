@@ -33,5 +33,7 @@
     (azure-cli.withExtensions [ azure-cli-extensions.azure-devops ])
     # The forbidden fruit
     claude-code
+    # Browser
+    firefox-devedition
   ];
 }

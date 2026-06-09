@@ -24,6 +24,15 @@
 
   security.sudo.wheelNeedsPassword = false;
 
+  # Run foreign (generic-linux) dynamic binaries — e.g. the claude-agent-sdk
+  # bundled `claude` CLI, which hardcodes /lib64/ld-linux-x86-64.so.2.
+  programs.nix-ld.enable = true;
+  programs.nix-ld.libraries = with pkgs; [
+    stdenv.cc.cc.lib
+    zlib
+    openssl
+  ];
+
   nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [ "claude-code" ];
 
   nix.settings = {
