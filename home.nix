@@ -9,6 +9,7 @@
     ./modules/neovim.nix
     ./modules/git.nix
     ./modules/kitty.nix
+    ./modules/i3.nix
   ];
 
   # INFO: see https://nlewo.github.io/nixos-manual-sphinx/development/assertions.xml.html

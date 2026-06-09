@@ -77,6 +77,7 @@
         modules = [
           nixos-wsl.nixosModules.wsl
           ./configuration.nix
+          ./modules/xrdp-i3.nix
           home-manager.nixosModules.home-manager
           {
             home-manager = {
