@@ -12,8 +12,13 @@
       CATPPUCCIN_SHOW_TIME = "true";
       CATPPUCCIN_SHOW_HOSTNAME = "always"; # Options: never, always, ssh
     };
-
+    initContent = ''
+      	    nix-gc() {
+      		    nix-collect-garbage --delete-older-than "$1" && nix store gc; 
+      		    }
+    '';
     shellAliases = {
+      # INFO: Unrelated but use "ss -tlnp" along with an optional pipe to ripgrep to list running port
       editNix = "z /etc/nixos && sudoedit flake.nix";
       nix-switch = "sudo nixos-rebuild switch --flake /etc/nixos#nixos";
       # Reap ALL leaked xrdp sessions (Xorg/i3/polybar/greenclip/chansrv pile up
