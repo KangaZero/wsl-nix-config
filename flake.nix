@@ -91,6 +91,7 @@
 
       devShells.${system}.default = pkgs.mkShell {
         inherit (self.checks.${system}.pre-commit-check) shellHook;
+        packages = [ pkgs.nixfmt-tree ];
         buildInputs = self.checks.${system}.pre-commit-check.enabledPackages;
       };
 

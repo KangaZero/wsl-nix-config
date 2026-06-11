@@ -97,11 +97,4 @@
     };
   };
 
-  # kitty renders via OpenGL, but WSL has no GPU DRM node (/dev/dri absent) so
-  # Mesa cannot get a hardware GL context (the libEGL/ZINK/dri2 errors). Force
-  # software rendering (llvmpipe). This must be in the *launching* environment —
-  # programs.kitty.settings.env only affects processes spawned inside kitty, not
-  # kitty's own GL init. Session-wide, but harmless on WSL where hardware GL is
-  # unavailable anyway.
-  home.sessionVariables.LIBGL_ALWAYS_SOFTWARE = "1";
 }

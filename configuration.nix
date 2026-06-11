@@ -12,6 +12,10 @@
 }:
 
 {
+  imports = [
+    ./modules/system/steam.nix
+  ];
+
   wsl.enable = true;
   wsl.defaultUser = "KangaZero";
 
@@ -32,8 +36,16 @@
     zlib
     openssl
   ];
+  hardware.graphics.enable32Bit = true;
 
-  nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [ "claude-code" ];
+  nixpkgs.config.allowUnfreePredicate =
+    pkg:
+    builtins.elem (lib.getName pkg) [
+      "claude-code"
+      "steam"
+      "steam-unwrapped"
+      "steam-run"
+    ];
 
   nix.settings = {
     experimental-features = [

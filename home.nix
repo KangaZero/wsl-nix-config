@@ -20,6 +20,12 @@
         username = "KangaZero";
         homeDirectory = "/home/KangaZero";
         stateVersion = "26.11";
+
+        # WSL has no GPU DRM node (/dev/dri absent), so Mesa cannot get a
+        # hardware GL context (libEGL/ZINK/dri2 errors). Force software
+        # rendering (llvmpipe) session-wide for every GL app (kitty, steam,
+        # etc). Harmless on WSL where hardware GL is unavailable anyway.
+        sessionVariables.LIBGL_ALWAYS_SOFTWARE = "1";
       };
 
       programs.home-manager.enable = true;
