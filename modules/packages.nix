@@ -2,15 +2,14 @@
 
 {
   home.packages = with pkgs; [
-    writeShellApplication
-    {
+    (writeShellApplication {
       name = "ns";
-      runtimeInputs = with pkgs; [
+      runtimeInputs = [
         fzf
         nix-search-tv
       ];
       text = builtins.readFile "${pkgs.nix-search-tv.src}/nixpkgs.sh";
-    }
+    })
     fzf
     zoxide
     ripgrep

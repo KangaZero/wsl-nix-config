@@ -15,7 +15,7 @@
 
     shellAliases = {
       editNix = "z /etc/nixos && sudoedit flake.nix";
-      nixRebuild = "sudo nixos-rebuild switch --flake /etc/nixos#nixos";
+      nix-switch = "sudo nixos-rebuild switch --flake /etc/nixos#nixos";
       # Reap ALL leaked xrdp sessions (Xorg/i3/polybar/greenclip/chansrv pile up
       # across reconnects), then restart the listeners. Drops your session —
       # reconnect after for ONE clean session. Does NOT revive a dead weston
