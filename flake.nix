@@ -5,7 +5,6 @@
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     home-manager = {
-      #NOTE: Currently at 26.11 for unstable creating a mismatch
       url = "github:nix-community/home-manager/master";
       inputs.nixpkgs.follows = "nixpkgs";
     };
@@ -31,7 +30,6 @@
     #
   };
 
-  #add in nvim repo inputs when ready
   outputs =
     {
       self,
@@ -97,6 +95,9 @@
 
       nixosConfigurations."nixos" = nixpkgs.lib.nixosSystem {
         inherit system;
+        specialArgs = {
+          inherit (self) inputs;
+        };
         modules = [
           nixos-wsl.nixosModules.wsl
           ./configuration.nix

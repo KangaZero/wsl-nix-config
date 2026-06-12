@@ -8,6 +8,7 @@
 {
   lib,
   pkgs,
+  inputs,
   ...
 }:
 
@@ -30,12 +31,14 @@
 
   # Run foreign (generic-linux) dynamic binaries — e.g. the claude-agent-sdk
   # bundled `claude` CLI, which hardcodes /lib64/ld-linux-x86-64.so.2.
-  programs.nix-ld.enable = true;
-  programs.nix-ld.libraries = with pkgs; [
-    stdenv.cc.cc.lib
-    zlib
-    openssl
-  ];
+  programs.nix-ld = {
+    enable = true;
+    libraries = with pkgs; [
+      stdenv.cc.cc.lib
+      zlib
+      openssl
+    ];
+  };
   hardware.graphics.enable32Bit = true;
 
   nixpkgs.config.allowUnfreePredicate =
@@ -47,18 +50,23 @@
       "steam-run"
     ];
 
-  nix.settings = {
-    experimental-features = [
-      "nix-command"
-      "flakes"
-    ];
-    allow-dirty-locks = false;
+  nix = {
+    settings = {
+      experimental-features = [
+        "nix-command"
+        "flakes"
+      ];
+      allow-dirty-locks = false;
+    };
+    # WARNING: If you use a nix-channel instead of a flake do not use the below
+    channel.enable = false;
+    registry.nixpkgs.flake = inputs.nixpkgs;
   };
 
   nix.gc = {
     automatic = true;
-    dates = "weekly";
-    options = "--delete-generations +30";
+    dates = "daily";
+    options = "--delete-older-than 7d";
   };
 
   # Make `sudo nvim` (root) use KangaZero's neovim config.
