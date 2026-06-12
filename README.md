@@ -9,7 +9,7 @@ a single flake.
 ## Defaults
 
 - Shell: `zsh` (oh-my-zsh + catppuccin)
-- Editor: `neovim` — set as `EDITOR` system-wide; config lives outside Nix at `~/.config/nvim` (sideloaded)
+- Editor: `neovim` — set as `EDITOR` system-wide; config lives outside Nix at `~/.config/nvim` (sideloaded) **Neovim config not included as of now, and only using the default way of configuring it (Lua), not the chad Nixvim way**
 - Languages/tooling: `typescript` (nodejs 26 + pnpm), `python` (+ `uv`), `rust` (rustup); version mgmt via `mise`
 - Terminal: `kitty` (declarative — Tokyo Night Moon theme, `modules/kitty.nix`). An `alacritty` config also exists in the Windows filesystem.
 - Desktop: **i3** X11 tiling WM over **xrdp**, reachable from Windows Remote Desktop — a full Linux GUI on WSL. See [i3 Desktop](#i3-desktop-run-linux-as-its-own-desktop).
