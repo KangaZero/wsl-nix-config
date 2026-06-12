@@ -93,6 +93,8 @@
         buildInputs = self.checks.${system}.pre-commit-check.enabledPackages;
       };
 
+      formatter.${system} = pkgs.nixfmt-tree;
+
       nixosConfigurations."nixos" = nixpkgs.lib.nixosSystem {
         inherit system;
         specialArgs = {

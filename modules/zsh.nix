@@ -19,9 +19,27 @@
       	    nix-gc() {
       		    nix-collect-garbage --delete-older-than "$1" && nix store gc; 
       		    }
+      kill-port() {
+        local port="$1"
+        [ -z "$port" ] && { echo "usage: kill-port <port>" >&2; return 1; }
+        local lpids
+        lpids=$(ss -ltnp "sport = :$port" 2>/dev/null | grep -oP 'pid=\K[0-9]+' | sort -u)
+        [ -z "$lpids" ] && { echo "kill-port: nothing listening on :$port" >&2; return 1; }
+        local targets="" pid ppid
+        for pid in $lpids; do
+          targets="$targets $pid"
+          ppid=$(ps -o ppid= -p "$pid" 2>/dev/null | tr -d ' ')
+          [ -n "$ppid" ] && [ "$ppid" -gt 1 ] && [ "$ppid" != "$$" ] && targets="$targets $ppid"
+        done
+        targets=$(echo "$targets" | tr ' ' '\n' | grep -v '^$' | sort -u)
+        echo "kill-port: killing $(echo $targets | tr '\n' ' ')on :$port" >&2
+        echo "$targets" | xargs -r kill -9
+      }
     '';
     shellAliases = {
       # INFO: Unrelated but use "ss -tlnp" along with an optional pipe to ripgrep to list running port
+      # To kill a port and its parents
+      # ss -ltnp 'sport = :8000' | grep -oP 'pid=\K[0-9]+' | sort -u | xargs -r kill -9
       edit-nix = "z /etc/nixos && sudoedit flake.nix";
       home-switch = "home-manager switch --flake /etc/nixos#KangaZero";
       nix-switch = "sudo nixos-rebuild switch --flake /etc/nixos#nixos";
