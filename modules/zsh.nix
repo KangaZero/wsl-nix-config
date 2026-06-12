@@ -3,7 +3,7 @@
 {
   programs.zsh = {
     enable = true;
-    enableBashCompletion = true;
+    enableAutosuggestions = true;
     enableCompletion = true;
     autosuggestion = {
       enable = true;
@@ -23,7 +23,8 @@
     '';
     shellAliases = {
       # INFO: Unrelated but use "ss -tlnp" along with an optional pipe to ripgrep to list running port
-      editNix = "z /etc/nixos && sudoedit flake.nix";
+      edit-nix = "z /etc/nixos && sudoedit flake.nix";
+      home-switch = "home-manager switch --flake /etc/nixos#KangaZero";
       nix-switch = "sudo nixos-rebuild switch --flake /etc/nixos#nixos";
       # Reap ALL leaked xrdp sessions (Xorg/i3/polybar/greenclip/chansrv pile up
       # across reconnects), then restart the listeners. Drops your session —
