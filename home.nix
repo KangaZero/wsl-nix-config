@@ -21,6 +21,10 @@
         homeDirectory = "/home/KangaZero";
         stateVersion = "26.11";
 
+        keyboard = {
+          layout = "us";
+        };
+
         # WSL has no GPU DRM node (/dev/dri absent), so Mesa cannot get a
         # hardware GL context (libEGL/ZINK/dri2 errors). Force software
         # rendering (llvmpipe) session-wide for every GL app (kitty, steam,
