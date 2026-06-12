@@ -10,11 +10,13 @@ a single flake.
 
 - Shell: `zsh` (oh-my-zsh + catppuccin)
 - Editor: `neovim` — set as `EDITOR` system-wide; config lives outside Nix at `~/.config/nvim` (sideloaded) **Neovim config not included as of now, and only using the default way of configuring it (Lua), not the chad Nixvim way**
-- Languages/tooling: `typescript` (nodejs 26 + pnpm), `python` (+ `uv`), `rust` (rustup); version mgmt via `mise`
+- Languages/tooling: `nodejs 26` + `pnpm` — runs `.ts` directly via Node's built-in type stripping (no `tsc`; `pnpm add -D typescript` per project for type-checking), `python3` (+ `uv`), `rust` (`rustup`); version mgmt via `mise`; Nix LSP via `nixd`
+- CLI toolkit (`modules/packages.nix`): `fzf`, `zoxide`, `ripgrep`, `bat`, `eza`, `fd`, `jq`, `btop`, `tldr`, `just`, `azure-cli` (+ devops ext); TUIs `yazi`, `zellij`, `lazygit`; `claude-code`; font `nerd-fonts.jetbrains-mono`
 - Terminal: `kitty` (declarative — Tokyo Night Moon theme, `modules/kitty.nix`). An `alacritty` config also exists in the Windows filesystem.
 - Desktop: **i3** X11 tiling WM over **xrdp**, reachable from Windows Remote Desktop — a full Linux GUI on WSL. See [i3 Desktop](#i3-desktop-run-linux-as-its-own-desktop).
 - Bar / notifications / launcher: `polybar` + `dunst` + `rofi`, all **Catppuccin Mocha** (`modules/i3/`).
 - Browser: `firefox` Developer Edition, declarative via `programs.firefox` (`modules/firefox.nix`) — policy hardening + Vimium.
+- Gaming: `steam` enabled system-wide (`modules/system/steam.nix`) — Remote Play + dedicated-server firewall, forced to launch from `$HOME` to dodge bwrap FHS sandbox chdir failures.
 
 ---
 
@@ -22,7 +24,7 @@ a single flake.
 
 ```
 .
-├── flake.nix                      # inputs (nixpkgs, home-manager, git-hooks, nixos-wsl) + outputs
+├── flake.nix                      # inputs (nixpkgs, home-manager, git-hooks, nixos-wsl) + outputs (system, home, devShell, checks, formatter)
 ├── flake.lock                     # pinned input revs (commit me)
 ├── configuration.nix              # NixOS SYSTEM config (users, nix settings, gc, editor, root nvim)
 ├── home.nix                       # home-manager entry point: identity + module imports
@@ -37,11 +39,13 @@ a single flake.
 │   ├── git.nix                    # global git identity + sane defaults
 │   ├── kitty.nix                  # kitty terminal — Tokyo Night Moon, declarative
 │   ├── firefox.nix                # firefox Dev Edition — programs.firefox policies + Vimium
-│   └── i3/                        # i3 desktop (Catppuccin Mocha)
-│       ├── default.nix            # i3 config: keybinds, gaps, autostart, wallpaper
-│       ├── rofi.nix               # rofi: launcher/powermenu/cheatsheet themes + modes
-│       ├── dunst.nix              # dunst notification daemon
-│       └── polybar.nix            # polybar status bar (replaces i3bar)
+│   ├── i3/                        # i3 desktop (Catppuccin Mocha)
+│   │   ├── default.nix            # i3 config: keybinds, gaps, autostart, wallpaper
+│   │   ├── rofi.nix               # rofi: launcher/powermenu/cheatsheet themes + modes
+│   │   ├── dunst.nix              # dunst notification daemon
+│   │   └── polybar.nix            # polybar status bar (replaces i3bar)
+│   └── system/
+│       └── steam.nix              # SYSTEM: programs.steam (Remote Play firewall, $HOME launch fix)
 ├── assets/                        # wallpapers / images referenced by configs (kitty bg, etc.)
 ├── .envrc                         # `use flake` → direnv loads devShell + installs pre-commit hook
 ├── .github/workflows/ci.yml       # GitHub Actions: nix flake check (lint) + system dry-build
@@ -57,8 +61,11 @@ Key facts:
   - `nixosConfigurations."nixos"` — the system (NixOS-WSL module + `configuration.nix` + `services/xrdp-i3.nix` + home-manager as a NixOS module).
   - `homeConfigurations."KangaZero"` — standalone home-manager (for `home-manager switch` without a full system rebuild).
 - `nixpkgs` follows `nixos-unstable`. `home-manager` tracks `master` (kept in lockstep with unstable).
-- **System Nix settings live in `configuration.nix`** (`nix.settings`, `nix.gc`) — *not* in a separate module. The old `modules/nix-settings.nix` was consolidated and removed.
-- Pre-commit hooks: `deadnix`, `nixfmt`, `statix`, **and a home-manager build** (`home-build` — builds `homeConfigurations.KangaZero.activationPackage` so a broken module/rasi/shellcheck fails the commit) — wired via the `git-hooks.nix` flake input, installed by the devShell.
+- **System Nix settings live in `configuration.nix`** (`nix.settings`, `nix.gc`) — *not* in a separate module. The old `modules/nix-settings.nix` was consolidated and removed. Legacy channels are disabled (`nix.channel.enable = false`) and the flake registry pins `nixpkgs` to this flake's input.
+- `nix fmt` **is** wired — `formatter.${system} = pkgs.nixfmt-tree` in `flake.nix`. Run `nix fmt` to format the tree.
+- Git hooks (via the `git-hooks.nix` flake input, installed by the devShell):
+  - **pre-commit:** `deadnix` → `nixfmt` → `statix` (fast lint/format, runs on every `git commit`).
+  - **pre-push:** `home-build` — builds `homeConfigurations.KangaZero.activationPackage` so a broken module/rasi/shellcheck fails the push. It's on pre-push (not pre-commit) because it shells out to `nix build`, which can't run inside the `nix flake check` sandbox.
 - CI: GitHub Actions (`.github/workflows/ci.yml`) runs `nix flake check` + a system dry-build on every push to `main` and on PRs.
 - The repo lives at **`/etc/nixos`** and is owned by `KangaZero` (chowned from root) so `git`, `direnv`, `nix develop`, and the pre-commit hook all work without `sudo`.
 
@@ -143,12 +150,22 @@ home-manager switch --flake .#KangaZero
 ### Shell aliases (from `modules/zsh.nix`)
 
 ```bash
-nixRebuild        # rebuild the system: sudo nixos-rebuild switch --flake /etc/nixos#nixos
-editNix           # jump to /etc/nixos and edit flake.nix via sudoedit (uses $EDITOR)
+nix-switch        # rebuild the system: sudo nixos-rebuild switch --flake /etc/nixos#nixos
+home-switch       # home-manager only: home-manager switch --flake /etc/nixos#KangaZero
+edit-nix          # jump to /etc/nixos and edit flake.nix via sudoedit (uses $EDITOR)
 nixRebuildStatus  # show an in-progress/stuck activation (transient unit + procs)
 nixRebuildKill    # abort a stuck activation and free its unit name
 restart-xrdp      # reap ALL leaked xrdp sessions, then restart xrdp + xrdp-sesman
 ff                # launch firefox detached from the shell
+ez                # eza long listing (icons, git, octal perms, dirs first)
+```
+
+Plus two shell functions (defined in `initContent`, not aliases):
+
+```bash
+nix-gc            # garbage-collect old generations + optimise the store
+kill-port <port>  # force-kill whatever is listening on <port>, walking up to parent procs
+cheatsheet-az     # print an Azure DevOps CLI cheatsheet
 ```
 
 ### Dev shell + pre-commit hooks
@@ -161,9 +178,9 @@ nix develop          # entering the shell installs .git/hooks/pre-commit
 
 Because `modules/direnv.nix` enables `direnv` + `nix-direnv` and `.envrc`
 contains `use flake`, simply `cd /etc/nixos` auto-loads the devShell (run
-`direnv allow` once). The hook then fires on every `git commit`:
-`deadnix` → `nixfmt` → `statix` → `home-build` (builds the home-manager
-generation, so a broken config can't be committed).
+`direnv allow` once). On every `git commit` the pre-commit chain fires:
+`deadnix` → `nixfmt` → `statix`. On `git push` the `home-build` hook builds
+the home-manager generation, so a broken config can't be pushed.
 
 ### Update inputs
 
@@ -175,8 +192,8 @@ sudo nixos-rebuild switch --flake .#nixos
 
 ### Garbage collect
 
-Automated in `configuration.nix` (`nix.gc`): runs weekly, keeps the last 30
-generations, then GCs the store. Manual sweep:
+Automated in `configuration.nix` (`nix.gc`): runs **daily**, deleting anything
+**older than 7 days** (`--delete-older-than 7d`). Manual sweep:
 
 ```bash
 sudo nix-collect-garbage -d       # delete all old system generations
@@ -348,6 +365,10 @@ keep B as the fallback.
 The pre-commit hook runs all three. To run them solo:
 
 ```bash
+nix fmt                               # format the whole tree (formatter = nixfmt-tree)
+```
+
+```bash
 nix run nixpkgs#statix -- check .     # lint
 nix run nixpkgs#statix -- fix .       # auto-fix
 nix run nixpkgs#deadnix -- .          # dead code
@@ -360,9 +381,6 @@ Or against the whole tree via the hook runner:
 nix develop --command pre-commit run --all-files
 ```
 
-Note: `nix fmt` is not wired (no `formatter` output in the flake). Use the
-commands above.
-
 ---
 
 ## Continuous Integration
@@ -370,16 +388,20 @@ commands above.
 GitHub Actions runs on every push to `main` and on pull requests
 (`.github/workflows/ci.yml`):
 
-1. **Lint + format** — `nix flake check`, which builds the flake's own
+1. **Lint + format** — `nix flake check -L`, which builds the flake's own
    `pre-commit-check`: the *same* `nixfmt` / `statix` / `deadnix` the local
    pre-commit hook runs. One source of truth, no duplicated lint config.
-2. **Dry-build** — `nix build --dry-run .#nixosConfigurations.nixos.config.system.build.toplevel`,
+2. **Build home-manager activation** — `nix build .#homeConfigurations.KangaZero.activationPackage`.
+   This is the same build the local `home-build` pre-push hook does, but run as
+   its own CI step (it can't live inside the `nix flake check` sandbox).
+3. **Dry-build NixOS system** — `nix build --dry-run .#nixosConfigurations.nixos.config.system.build.toplevel`,
    the portable equivalent of `nixos-rebuild dry-build` (GitHub runners aren't
    NixOS, so there's no `nixos-rebuild`).
 
-Nix is installed by `DeterminateSystems/nix-installer-action`. A `cachix` step
-is present but commented out — enable it (and set a `CACHIX_AUTH_TOKEN` secret)
-for a binary cache if CI gets slow.
+A `concurrency` group cancels superseded runs on the same ref. Nix is installed
+by `DeterminateSystems/nix-installer-action`. A `cachix` step is present but
+commented out — enable it (and set a `CACHIX_AUTH_TOKEN` secret) for a binary
+cache if CI gets slow.
 
 ---
 
@@ -397,6 +419,7 @@ Edit the relevant file:
 - Kitty terminal → `modules/kitty.nix`
 - Firefox (policies + extensions) → `modules/firefox.nix`
 - i3 desktop (keybinds, bar, launcher, notifications, wallpaper) → `modules/i3/`
+- Steam (system program) → `modules/system/steam.nix`
 - xrdp / X server (the desktop transport) → `services/xrdp-i3.nix`
 
 New tool/program → create `modules/<name>.nix` and add it to the `imports` list
