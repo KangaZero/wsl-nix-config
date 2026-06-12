@@ -251,10 +251,10 @@ services.xrdp = {
 
 | File | What |
 |---|---|
-| `default.nix` | i3 config: keybinds, gaps, Catppuccin Mocha colors, autostart (wallpaper, dunst, greenclip, polybar) |
+| `default.nix` | i3 config: keybinds, gaps, Catppuccin Mocha colors, autostart (wallpaper, dunst, greenclip, polybar), keyboard layout set (`us,jp`) |
 | `rofi.nix`    | rofi launcher + powermenu/cheatsheet/applet themes, and `window`/`combi`/`calc`/`clipboard` modes |
 | `dunst.nix`   | dunst notification daemon (Mocha) |
-| `polybar.nix` | polybar status bar — rounded "island" pills (workspaces/window/cpu/mem/disk/net/clock), replaces i3bar |
+| `polybar.nix` | polybar status bar — rounded "island" pills (workspaces/window/**keyboard layout**/cpu/mem/disk/net/clock), replaces i3bar |
 
 Wallpaper is pinned with `fetchurl` and set via `feh --bg-fill` in the i3 autostart.
 
@@ -276,6 +276,7 @@ Super/Win is eaten by Windows over RDP, so the mod key is **Alt**.
 | `$mod+h/j/k/l` | focus · `+Shift` to move |
 | `$mod+1..9` | workspaces · `+Shift` to move window |
 | `$mod+f` / `$mod+space` | fullscreen / floating toggle |
+| `$mod+Ctrl+l` | cycle keyboard layout **US ↔ JIS** (`xkb-switch -n`); active layout shown in polybar |
 | `$mod+Shift+r` / `$mod+Shift+c` | restart / reload i3 |
 
 rofi navigation is **vim-style**: `Ctrl+j/k` down/up, `Ctrl+h/l` columns.

@@ -61,7 +61,7 @@ in
 
     modules-left = i3 xwindow
     modules-center = date
-    modules-right = cpu memory fs eth
+    modules-right = xkeyboard cpu memory fs eth
 
     [module/i3]
     type = internal/i3
@@ -92,6 +92,19 @@ in
     label-urgent-background = ${red}
     label-urgent-foreground = ${base}
     label-urgent-padding = 1
+
+    [module/xkeyboard]
+    type = internal/xkeyboard
+    blacklist-0 = num lock
+    blacklist-1 = scroll lock
+    format = <label-layout>
+    format-prefix = "%{T2}%{T-}"
+    format-prefix-foreground = ${surface0}
+    format-suffix = "%{T2}%{T-}"
+    format-suffix-foreground = ${surface0}
+    label-layout = "%{F${mauve}}%{F-} %layout% "
+    label-layout-background = ${surface0}
+    label-layout-foreground = ${text}
 
     [module/cpu]
     type = internal/cpu

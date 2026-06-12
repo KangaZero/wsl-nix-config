@@ -16,6 +16,7 @@ in
 
   home.packages = with pkgs; [
     feh # wallpaper
+    xkb-switch-i3 # i3-aware xkb group cycler (per-window layout); ships `xkb-switch` bin
   ];
 
   # --- i3 ---
@@ -57,6 +58,11 @@ in
     hide_edge_borders smart
 
     # --- autostart ---
+    # Declare the allowed layout set explicitly: US (ANSI) + JIS Apple variant.
+    # First entry (us) is active on start. NOT exec_always: re-running on every
+    # i3 reload would reset the active group (see $mod+Ctrl+l toggle below).
+    # Trade-off: an xrdp *reconnect* without i3 restart keeps the last group.
+    exec --no-startup-id ${pkgs.setxkbmap}/bin/setxkbmap -layout us,jp 
     exec --no-startup-id ${pkgs.feh}/bin/feh --bg-fill ${wallpaper}
     exec --no-startup-id ${pkgs.dunst}/bin/dunst
     exec --no-startup-id greenclip daemon
@@ -112,6 +118,11 @@ in
     bindsym $mod+Shift+3 move container to workspace number 3
     bindsym $mod+Shift+4 move container to workspace number 4
     bindsym $mod+Shift+5 move container to workspace number 5
+
+    # --- keyboard layout: cycle US <-> JIS group. Keeps both layouts loaded
+    #     (does not rebuild the set). Polybar xkeyboard module reflects active. ---
+    # other useful commands xkb-switch -l to see list of available layouts
+    bindsym $mod+Ctrl+l exec --no-startup-id ${pkgs.xkb-switch-i3}/bin/xkb-switch -n
 
     # --- session ---
     bindsym $mod+Shift+c reload
