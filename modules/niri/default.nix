@@ -38,10 +38,6 @@ in
             tap
             natural-scroll
         }
-
-        mouse {
-            natural-scroll false
-        }
     }
 
     // ─── Layout ──────────────────────────────────────────────────────────────

@@ -5,4 +5,6 @@
     package = pkgs.niri;
   };
   programs.xwayland.enable = true;
+
+  environment.systemPackages = [ pkgs.xwayland-satellite ];
 }
