@@ -13,12 +13,18 @@
 }:
 
 {
-  imports = [
-    ./modules/system/steam.nix
-  ];
+  # TODO Move this over to personal nix config instead
+  # imports = [
+  #   ./modules/system/steam.nix
+  # ];
 
-  wsl.enable = true;
-  wsl.defaultUser = "KangaZero";
+  wsl = {
+    enable = true;
+    defaultUser = "KangaZero";
+    useWindowsDriver = true;
+    startMenuLaunchers = true;
+    ssh-agent.enable = false;
+  };
 
   time.timeZone = "Asia/Tokyo";
 
@@ -81,12 +87,14 @@
   # Default editor for all users (root included)
   environment.variables.EDITOR = "nvim";
 
-  environment.systemPackages = [
-    pkgs.git
-    pkgs.vim
-    pkgs.neovim
-    pkgs.nixd
-  ];
+  environment.systemPackages = builtins.attrValues {
+    inherit (pkgs)
+      git
+      neovim
+      nixd
+      weston
+      ;
+  };
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions
   # on your system were taken. It's perfectly fine and recommended to leave

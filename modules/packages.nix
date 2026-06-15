@@ -1,6 +1,7 @@
 { pkgs, ... }:
 
 {
+  # NOTE: the "with" keyword is not considered best practice, but here is a personal choice. see https://nix.dev/guides/best-practices. can be rewritten with bultins.attrValues { inherit (pkgs) <packages> };
   home.packages = with pkgs; [
     (writeShellApplication {
       name = "ns";
