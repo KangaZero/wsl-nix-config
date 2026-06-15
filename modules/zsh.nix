@@ -54,6 +54,7 @@
       nixRebuildStatus = "systemctl --no-pager status nixos-rebuild-switch-to-configuration.service 2>/dev/null; pgrep -af 'nixos-rebuild|switch-to-configuration' || echo 'no rebuild running'";
       # Abort a stuck activation: stop the transient unit and free its name
       nixRebuildKill = "sudo systemctl stop nixos-rebuild-switch-to-configuration.service 2>/dev/null; sudo systemctl reset-failed nixos-rebuild-switch-to-configuration.service 2>/dev/null; echo 'cleared stale activation unit'";
+      weston = "weston --fullscreen";
       ez = "eza -laF --icons=always --group-directories-first --git-repos-no-status --octal-permissions --modified --numeric";
       cheatsheet-az = ''
         cat <<'EOF' | bat --language=md --style=plain

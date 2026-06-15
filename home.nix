@@ -11,6 +11,7 @@
     ./modules/kitty.nix
     ./modules/firefox.nix
     ./modules/i3/default.nix
+    ./modules/config/weston.nix
   ];
 
   # INFO: see https://nlewo.github.io/nixos-manual-sphinx/development/assertions.xml.html
