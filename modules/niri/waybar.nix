@@ -62,8 +62,12 @@ let
   barSettings = {
     layer = "top";
     position = "top";
-    height = 40;
-    # No full-width background — pills handle their own bg via CSS
+    height = 36;
+    spacing = 6;
+    # Float bar away from screen edge
+    margin-top = 6;
+    margin-left = 10;
+    margin-right = 10;
 
     modules-left = [
       "niri/workspaces"
@@ -79,13 +83,10 @@ let
     ];
 
     # --- niri/workspaces ---------------------------------------------------
+    # format = "{id}" shows workspace numbers; CSS classes (active/focused/urgent)
+    # handle colour — no dependency on nerd font glyph rendering.
     "niri/workspaces" = {
-      format = "{icon}";
-      format-icons = {
-        active = ""; # nf-md-circle
-        focused = ""; # nf-md-circle_outline (focused but not active)
-        default = ""; # nf-md-circle_small
-      };
+      format = "{id}";
       all-outputs = false;
       hide-empty = false;
     };
@@ -155,48 +156,54 @@ let
   # ---------------------------------------------------------------------------
   barStyle = ''
     * {
-      font-family: "JetBrainsMono Nerd Font", "Font Awesome 6 Free", "Material Design Icons", sans-serif;
-      font-size: 13px;
+      font-family: "JetBrainsMono Nerd Font", "Font Awesome 6 Free", sans-serif;
+      font-size: 12px;
       min-height: 0;
       border: none;
       border-radius: 0;
     }
 
-    /* Transparent bar window so only pills are visible */
+    /* Transparent bar — only the pill segments are visible */
     window#waybar {
       background-color: transparent;
       color: ${colors.fg};
     }
 
-    /* Each top-level module box becomes a pill segment */
+    /* ── Pill segments ─────────────────────────────────────────────────────
+       Each direct child widget of the three module boxes gets its own pill.
+       border-radius clips the pill shape; margin creates the gap between pills. */
     .modules-left > widget,
     .modules-center > widget,
     .modules-right > widget {
       background-color: ${colors.bg};
-      border-radius: 6px;
-      margin: 4px 2px;
-      padding: 0 12px;
+      border-radius: 8px;
+      margin: 0 4px;
+      padding: 0 14px;
     }
 
-    /* --- niri/workspaces ------------------------------------------------- */
+    /* ── Workspaces ──────────────────────────────────────────────────────── */
     #workspaces {
-      padding: 0 6px;
+      padding: 0 4px;
     }
 
     #workspaces button {
       background-color: transparent;
       color: ${colors.fg};
-      padding: 0 4px;
-      border-radius: 4px;
-      min-width: 18px;
+      padding: 0 8px;
+      border-radius: 6px;
+      min-width: 24px;
+      font-weight: bold;
     }
 
     #workspaces button:hover {
       background-color: ${colors.surface};
+      color: ${colors.fg};
     }
 
     #workspaces button.active {
-      color: ${colors.blue};
+      background-color: ${colors.blue};
+      color: ${colors.bg};
+      border-radius: 6px;
     }
 
     #workspaces button.focused {
@@ -204,49 +211,37 @@ let
     }
 
     #workspaces button.urgent {
-      color: ${colors.pink};
+      background-color: ${colors.pink};
+      color: ${colors.bg};
     }
 
-    /* --- niri/window ----------------------------------------------------- */
+    /* ── Window title ────────────────────────────────────────────────────── */
     #window {
       color: ${colors.fg};
       font-style: italic;
     }
 
-    /* --- clock ----------------------------------------------------------- */
+    /* ── Clock ───────────────────────────────────────────────────────────── */
     #clock {
       color: ${colors.green};
       font-weight: bold;
+      letter-spacing: 1px;
     }
 
-    /* --- cpu ------------------------------------------------------------- */
-    #cpu {
-      color: ${colors.cyan};
-    }
+    /* ── System stats ────────────────────────────────────────────────────── */
+    #cpu    { color: ${colors.cyan};   }
+    #memory { color: ${colors.purple}; }
+    #disk   { color: ${colors.teal};   }
 
-    /* --- memory ---------------------------------------------------------- */
-    #memory {
-      color: ${colors.purple};
-    }
+    /* ── Network ─────────────────────────────────────────────────────────── */
+    #network              { color: ${colors.blue}; }
+    #network.disconnected { color: ${colors.pink}; }
 
-    /* --- disk ------------------------------------------------------------ */
-    #disk {
-      color: ${colors.teal};
-    }
-
-    /* --- network --------------------------------------------------------- */
-    #network {
-      color: ${colors.blue};
-    }
-
-    #network.disconnected {
-      color: ${colors.pink};
-    }
-
-    /* --- custom/language ------------------------------------------------- */
+    /* ── Keyboard layout ─────────────────────────────────────────────────── */
     #custom-language {
       color: ${colors.pink};
       font-weight: bold;
+      letter-spacing: 1px;
     }
   '';
 
