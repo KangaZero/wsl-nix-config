@@ -439,6 +439,36 @@ Apply: `sudo nixos-rebuild switch --flake .#nixos`.
 - NixOS-WSL: https://github.com/nix-community/NixOS-WSL
 - NixOS manual (unstable): https://nixos.org/manual/nixos/unstable/
 - Home-manager: https://nix-community.github.io/home-manager/
+- nix.dev best practices: https://nix.dev/guides/best-practices.html
 - statix: https://github.com/oppiliappan/statix
 - deadnix: https://github.com/astro/deadnix
 - git-hooks.nix: https://github.com/cachix/git-hooks.nix
+
+---
+
+## Credits
+
+Sources and inspiration for the desktop configs:
+
+### Niri desktop
+
+| What | Source |
+|---|---|
+| niri WM | https://github.com/YaLTeR/niri — KDL config reference: `resources/default-config.kdl` |
+| niri IPC schema | https://github.com/YaLTeR/niri/blob/main/niri-ipc/src/lib.rs |
+| awesome-niri (tool list) | https://github.com/niri-wm/awesome-niri |
+| xwayland-satellite | https://github.com/Supreeeme/xwayland-satellite |
+| waypaper | https://github.com/anufrievroman/waypaper |
+| awww (wallpaper daemon, formerly swww) | https://codeberg.org/LGFae/awww |
+
+### Rice / theming
+
+| What | Source |
+|---|---|
+| **Pamela color palette** (bar, mako, niri borders) | [gh0stzk/dotfiles](https://github.com/gh0stzk/dotfiles) — `config/bspwm/rices/pamela/config.ini` |
+| Segmented floating-pill bar design | gh0stzk/dotfiles Pamela rice — adapted from polybar multi-bar layout to Waybar CSS |
+| rofi themes (launcher / powermenu / applet `.rasi`) | [adi1090x/rofi](https://github.com/adi1090x/rofi) — `launchers/type-1/style-1`, `powermenu/type-1/style-1`, `applets/type-1/style-1`; palette inlined, no runtime `@import` |
+
+### Wallpaper
+
+Pinned via `pkgs.fetchurl` from [dharmx/walls](https://github.com/dharmx/walls) — `outrun/a_street_with_buildings_and_signs.png`.
