@@ -70,6 +70,7 @@ let
     margin-right = 10;
 
     modules-left = [
+      "custom/nixos"
       "niri/workspaces"
       "niri/window"
     ];
@@ -79,8 +80,15 @@ let
       "memory"
       "disk"
       "network"
+      "battery"
       "custom/language"
     ];
+
+    # --- custom/nixos ------------------------------------------------------
+    "custom/nixos" = {
+      format = " ";
+      tooltip = false;
+    };
 
     # --- niri/workspaces ---------------------------------------------------
     # format = "{id}" shows workspace numbers; CSS classes (active/focused/urgent)
@@ -104,8 +112,7 @@ let
 
     # --- clock -------------------------------------------------------------
     clock = {
-      format = " {:%H:%M}";
-      format-alt = " {:%a %d %b %Y}";
+      format = " {:%a %d %b   %H:%M}";
       tooltip-format = "<big>{:%B %Y}</big>\n<tt><small>{calendar}</small></tt>";
     };
 
@@ -139,6 +146,26 @@ let
       format-alt = "{ifname}: {ipaddr}/{cidr}";
       tooltip-format-wifi = "{signalStrength}% {frequency}GHz";
       interval = 10;
+    };
+
+    # --- battery -----------------------------------------------------------
+    battery = {
+      format = "{icon} {capacity}%";
+      format-icons = [
+        ""
+        ""
+        ""
+        ""
+        ""
+      ];
+      format-charging = " {capacity}%";
+      format-plugged = " {capacity}%";
+      format-full = " {capacity}%";
+      states = {
+        warning = 30;
+        critical = 15;
+      };
+      tooltip-format = "{timeTo} — {power}W";
     };
 
     # --- custom/language ---------------------------------------------------
@@ -179,6 +206,13 @@ let
       border-radius: 8px;
       margin: 0 4px;
       padding: 0 14px;
+    }
+
+    /* ── NixOS logo ─────────────────────────────────────────────────────── */
+    #custom-nixos {
+      color: ${colors.blue};
+      font-size: 16px;
+      padding: 0 6px;
     }
 
     /* ── Workspaces ──────────────────────────────────────────────────────── */
@@ -236,6 +270,13 @@ let
     /* ── Network ─────────────────────────────────────────────────────────── */
     #network              { color: ${colors.blue}; }
     #network.disconnected { color: ${colors.pink}; }
+
+    /* ── Battery ─────────────────────────────────────────────────────────── */
+    #battery              { color: ${colors.green};  }
+    #battery.warning      { color: ${colors.teal};   }
+    #battery.critical     { color: ${colors.pink};   }
+    #battery.charging,
+    #battery.plugged      { color: ${colors.cyan};   }
 
     /* ── Keyboard layout ─────────────────────────────────────────────────── */
     #custom-language {
