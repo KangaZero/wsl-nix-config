@@ -103,7 +103,7 @@
         modules = [
           nixos-wsl.nixosModules.wsl
           ./configuration.nix
-          ./services/xrdp-i3.nix
+          ./services/niri-wayland.nix
           home-manager.nixosModules.home-manager
           {
             home-manager = {

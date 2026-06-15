@@ -43,11 +43,9 @@
       edit-nix = "z /etc/nixos && sudoedit flake.nix";
       home-switch = "home-manager switch --flake /etc/nixos#KangaZero";
       nix-switch = "sudo nixos-rebuild switch --flake /etc/nixos#nixos";
-      # Reap ALL leaked xrdp sessions (Xorg/i3/polybar/greenclip/chansrv pile up
-      # across reconnects), then restart the listeners. Drops your session —
-      # reconnect after for ONE clean session. Does NOT revive a dead weston
-      # compositor; for that use `wsl --shutdown` from Windows.
-      restart-xrdp = "pkill -f xorgxrdp; pkill -f startwm; pkill -x i3; pkill -x polybar; pkill -x greenclip; pkill -f xrdp-chansrv; sleep 1; sudo systemctl restart xrdp xrdp-sesman && systemctl is-active xrdp xrdp-sesman";
+      # Start niri Wayland session (sets up DBus, activates graphical-session.target, then runs niri).
+      # WSLg provides WAYLAND_DISPLAY=wayland-0; niri runs nested under the WSLg compositor.
+      niri-session = "niri-session";
       # Launch Firefox detached from the shell (survives terminal close, no output spam)
       ff = "setsid firefox-devedition >/dev/null 2>&1 < /dev/null &";
       # Show an in-progress/stuck activation (transient unit + related procs)
