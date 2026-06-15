@@ -55,6 +55,14 @@ in
     // borders). Niri draws focus rings itself; CSD wastes vertical space.
     prefer-no-csd
 
+    // ─── Autostart ───────────────────────────────────────────────────────────
+    // awww-daemon must be running before waypaper can set the wallpaper.
+    // Running via spawn-at-startup (not systemd) because niri is launched from
+    // weston manually, not as a systemd session, so graphical-session.target
+    // is never activated.
+    spawn-at-startup "awww-daemon"
+    spawn-at-startup "sh" "-c" "sleep 2 && waypaper --restore"
+
     // ─── Keybinds ────────────────────────────────────────────────────────────
     // Mod = Alt.  Super is captured by Windows/WSLg window chrome.
     binds {
