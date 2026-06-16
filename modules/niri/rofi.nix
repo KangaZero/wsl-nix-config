@@ -31,12 +31,10 @@ let
       pkgs.niri
     ];
     text = ''
-      chosen=$(printf '%s\n' "  Shutdown" "  Reboot" "  Logout" \
-        | rofi -dmenu -i -theme "$HOME/.config/rofi/powermenu.rasi" -p "Power")
+      chosen=$(printf '%s\n' "  Exit Niri" \
+        | rofi -dmenu -i -theme "$HOME/.config/rofi/powermenu.rasi" -p "")
       case "$chosen" in
-        *Shutdown) systemctl poweroff ;;
-        *Reboot)   systemctl reboot ;;
-        *Logout)   niri msg action quit ;;
+        *"Exit Niri") niri msg action quit ;;
       esac
     '';
   };

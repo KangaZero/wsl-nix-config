@@ -268,7 +268,7 @@ Super/Win is captured by the WSLg window chrome, so the mod key is **Alt**.
 | `$mod+Shift+d` | combi (apps + run + windows) |
 | `$mod+c` | calculator (rofi-calc) |
 | `$mod+Shift+v` | clipboard history (cliphist → rofi) |
-| `$mod+Shift+e` | power menu |
+| `$mod+Shift+e` | exit niri |
 | `$mod+Shift+/` | keybinding cheatsheet |
 | `$mod+Shift+q` | close window |
 | `$mod+h/j/k/l` | focus left/down/up/right · `+Shift` to move |
