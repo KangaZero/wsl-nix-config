@@ -14,7 +14,7 @@ a single flake.
 - CLI toolkit (`modules/packages.nix`): `fzf`, `zoxide`, `ripgrep`, `bat`, `eza`, `fd`, `jq`, `btop`, `tldr`, `just`, `azure-cli` (+ devops ext); TUIs `yazi`, `zellij`, `lazygit`; `claude-code`; font `nerd-fonts.jetbrains-mono`
 - Terminal: `kitty` (declarative — Tokyo Night Moon theme, `modules/kitty.nix`). An `alacritty` config also exists in the Windows filesystem.
 - Desktop: **niri** Wayland tiling compositor, running nested inside **weston** (fullscreen, kiosk-shell). WSLg is the outermost display. See [Niri Desktop](#niri-desktop).
-- Shell / bar / notifications / launcher / wallpaper / clipboard: **noctalia-shell** — single QML shell replacing waybar + mako + waypaper + cliphist GUI. Config at `~/.config/noctalia/settings.json` (`modules/niri/noctalia.nix`). Clipboard history backed by `cliphist` + `wl-clipboard`. Rofi kept for the clipboard picker and powermenu.
+- Shell / bar / notifications / launcher / wallpaper / clipboard: **noctalia-shell** — single QML shell replacing waybar + mako + waypaper + cliphist daemon. Config at `~/.config/noctalia/settings.json` (`modules/niri/noctalia.nix`). Clipboard history backed by `cliphist` + `wl-clipboard`. Rofi kept for the clipboard picker and powermenu.
 - Browser: `firefox` Developer Edition, declarative via `programs.firefox` (`modules/firefox.nix`) — policy hardening + Vimium.
 - Gaming: `steam` module exists (`modules/system/steam.nix`) — Remote Play + dedicated-server firewall, forced to launch from `$HOME` to dodge bwrap FHS sandbox chdir failures. **Currently commented out** in `configuration.nix` — uncomment the import to enable.
 
@@ -43,7 +43,7 @@ a single flake.
 │   │   └── weston.nix             # weston.ini — kiosk-shell, fullscreen output (base compositor)
 │   ├── niri/                      # niri Wayland desktop
 │   │   ├── default.nix            # niri KDL config: keybinds, gaps, focus-ring, autostart
-│   │   ├── noctalia.nix           # noctalia-shell: bar + notifications + launcher + wallpaper; settings.json
+│   │   ├── noctalia.nix           # noctalia-shell: bar + notifications + launcher + wallpaper + clipboard; settings.json
 │   │   ├── rofi.nix               # rofi: launcher/powermenu/cheatsheet/clipboard themes + modes
 │   │   ├── cliphist.nix           # cliphist + wl-clipboard (used by noctalia clipboard history)
 │   │   └── waypaper.nix           # (unused — superseded by noctalia wallpaper engine)
@@ -226,15 +226,15 @@ Start it with the `weston` alias. `LIBGL_ALWAYS_SOFTWARE=1` is set session-wide 
 > **Warning — latency & weston dependency**
 >
 > Because niri cannot connect to WSLg's Wayland socket directly (winit/wayland-rs incompatibility),
-> **weston is a required bridge**. This double-compositor hop introduces rendering latency that scales
-> with your machine's CPU/GPU performance — on slower hardware you may notice noticeable lag.
+> **weston is a required bridge**. This double-compositor hop adds input latency that is more
+> noticeable on slower hardware — expect visible lag on lower-end machines.
 >
 > If the `weston` alias fails to launch (e.g. "Connection refused" or compositor errors), **restart
 > WSL first**: run `wsl --shutdown` from PowerShell, reopen the distro, and try `weston` again. A
 > stale WSLg compositor process is the most common cause.
 
 <!-- TODO: import noctalia config declaratively via home-manager (modules/niri/noctalia.nix currently
-     writes settings.json but the full noctalia KDE/QML config (themes, widget layout overrides)
+     writes settings.json but the full noctalia QML config (themes, widget layout overrides)
      is not yet sourced into Nix — import it in. -->
 
 
@@ -257,7 +257,7 @@ weston is configured with `kiosk-shell.so` so niri fills the entire output with 
 | `default.nix` | niri KDL config: keybinds, gaps, focus-ring (Pamela blue), keyboard layouts (`us,jp`), `spawn-at-startup noctalia-shell` |
 | `noctalia.nix` | noctalia-shell — bar, notifications, app launcher, wallpaper engine, clipboard history; declarative `settings.json` via `home.file` |
 | `rofi.nix` | rofi launcher + powermenu (`niri msg action quit`) + clipboard picker (cliphist) + cheatsheet |
-| `cliphist.nix` | cliphist + wl-clipboard packages (clipboard watching managed by noctalia) |
+| `cliphist.nix` | enables `services.cliphist` systemd user service + `wl-clipboard`; noctalia also runs its own `wl-paste --watch` commands (redundant, both populate the cliphist store) |
 | `waypaper.nix` | unused — superseded by noctalia's wallpaper engine |
 
 ### Keybinds (`$mod` = **Alt**)
@@ -468,15 +468,14 @@ Sources and inspiration for the desktop configs:
 | niri IPC schema | https://github.com/YaLTeR/niri/blob/main/niri-ipc/src/lib.rs |
 | awesome-niri (tool list) | https://github.com/niri-wm/awesome-niri |
 | xwayland-satellite | https://github.com/Supreeeme/xwayland-satellite |
-| waypaper | https://github.com/anufrievroman/waypaper |
-| awww (wallpaper daemon, formerly swww) | https://codeberg.org/LGFae/awww |
+| waypaper *(superseded by noctalia)* | https://github.com/anufrievroman/waypaper |
+| awww *(superseded by noctalia)* | https://codeberg.org/LGFae/awww |
 
 ### Rice / theming
 
 | What | Source |
 |---|---|
-| **Pamela color palette** (bar, mako, niri borders) | [gh0stzk/dotfiles](https://github.com/gh0stzk/dotfiles) — `config/bspwm/rices/pamela/config.ini` |
-| Segmented floating-pill bar design | gh0stzk/dotfiles Pamela rice — adapted from polybar multi-bar layout to Waybar CSS |
+| **Pamela color palette** (niri focus-ring + border colours) | [gh0stzk/dotfiles](https://github.com/gh0stzk/dotfiles) — `config/bspwm/rices/pamela/config.ini` |
 | rofi themes (launcher / powermenu / applet `.rasi`) | [adi1090x/rofi](https://github.com/adi1090x/rofi) — `launchers/type-1/style-1`, `powermenu/type-1/style-1`, `applets/type-1/style-1`; palette inlined, no runtime `@import` |
 
 ### Wallpaper
