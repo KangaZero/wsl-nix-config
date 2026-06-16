@@ -13,8 +13,10 @@ a single flake.
 - Languages/tooling: `nodejs 26` + `pnpm` — runs `.ts` directly via Node's built-in type stripping (no `tsc`; `pnpm add -D typescript` per project for type-checking), `python3` (+ `uv`), `rust` (`rustup`); version mgmt via `mise`; Nix LSP via `nixd`
 - CLI toolkit (`modules/packages.nix`): `fzf`, `zoxide`, `ripgrep`, `bat`, `eza`, `fd`, `jq`, `btop`, `tldr`, `just`, `azure-cli` (+ devops ext); TUIs `yazi`, `zellij`, `lazygit`; `claude-code`; font `nerd-fonts.jetbrains-mono`
 - Terminal: `kitty` (declarative — Tokyo Night Moon theme, `modules/kitty.nix`). An `alacritty` config also exists in the Windows filesystem.
-- Desktop: **i3** X11 tiling WM over **xrdp**, reachable from Windows Remote Desktop — a full Linux GUI on WSL. See [i3 Desktop](#i3-desktop-run-linux-as-its-own-desktop).
-- Bar / notifications / launcher: `polybar` + `dunst` + `rofi`, all **Catppuccin Mocha** (`modules/i3/`).
+- Desktop: **niri** Wayland tiling compositor, running nested inside **weston** (fullscreen, kiosk-shell). WSLg is the outermost display. See [Niri Desktop](#niri-desktop).
+- Bar / notifications / launcher: `waybar` (Pamela floating pills) + `mako` + `rofi` (`modules/niri/`).
+- Wallpaper: `waypaper` GUI frontend + `awww` daemon (`modules/niri/waypaper.nix`), pinned wallpaper via `fetchurl`.
+- Clipboard: `cliphist` + `wl-clipboard` replacing greenclip (`modules/niri/cliphist.nix`).
 - Browser: `firefox` Developer Edition, declarative via `programs.firefox` (`modules/firefox.nix`) — policy hardening + Vimium.
 - Gaming: `steam` enabled system-wide (`modules/system/steam.nix`) — Remote Play + dedicated-server firewall, forced to launch from `$HOME` to dodge bwrap FHS sandbox chdir failures.
 
@@ -29,21 +31,25 @@ a single flake.
 ├── configuration.nix              # NixOS SYSTEM config (users, nix settings, gc, editor, root nvim)
 ├── home.nix                       # home-manager entry point: identity + module imports
 ├── services/
-│   └── xrdp-i3.nix                # SYSTEM: xrdp (port 3390) + Xorg + i3 — the Linux desktop
+│   └── niri-wayland.nix           # SYSTEM: programs.niri + xwayland + xwayland-satellite
 ├── modules/
 │   ├── packages.nix               # home.packages (cli tools, langs, claude-code)
 │   ├── bash.nix                   # bash → zsh trampoline (safety net)
-│   ├── zsh.nix                    # zsh + oh-my-zsh + catppuccin + aliases (incl. restart-xrdp)
+│   ├── zsh.nix                    # zsh + oh-my-zsh + catppuccin + aliases (weston, niri-session, …)
 │   ├── direnv.nix                 # direnv + nix-direnv (auto-loads the devShell)
 │   ├── neovim.nix                 # neovim, defaultEditor, sideloads ~/.config/nvim
 │   ├── git.nix                    # global git identity + sane defaults
 │   ├── kitty.nix                  # kitty terminal — Tokyo Night Moon, declarative
 │   ├── firefox.nix                # firefox Dev Edition — programs.firefox policies + Vimium
-│   ├── i3/                        # i3 desktop (Catppuccin Mocha)
-│   │   ├── default.nix            # i3 config: keybinds, gaps, autostart, wallpaper
-│   │   ├── rofi.nix               # rofi: launcher/powermenu/cheatsheet themes + modes
-│   │   ├── dunst.nix              # dunst notification daemon
-│   │   └── polybar.nix            # polybar status bar (replaces i3bar)
+│   ├── config/
+│   │   └── weston.nix             # weston.ini — kiosk-shell, fullscreen output (base compositor)
+│   ├── niri/                      # niri Wayland desktop (Pamela palette)
+│   │   ├── default.nix            # niri KDL config: keybinds, gaps, focus-ring, autostart
+│   │   ├── waybar.nix             # waybar — niri/workspaces pills, Pamela CSS, language indicator
+│   │   ├── mako.nix               # mako notification daemon (Pamela palette, urgency tiers)
+│   │   ├── rofi.nix               # rofi: launcher/powermenu/cheatsheet/clipboard themes + modes
+│   │   ├── cliphist.nix           # cliphist daemon + wl-clipboard
+│   │   └── waypaper.nix           # waypaper GUI + awww daemon + pinned wallpaper
 │   └── system/
 │       └── steam.nix              # SYSTEM: programs.steam (Remote Play firewall, $HOME launch fix)
 ├── assets/                        # wallpapers / images referenced by configs (kitty bg, etc.)
@@ -58,7 +64,7 @@ a single flake.
 Key facts:
 
 - `flake.nix` → `system = x86_64-linux`, `username = "KangaZero"`. Two outputs of note:
-  - `nixosConfigurations."nixos"` — the system (NixOS-WSL module + `configuration.nix` + `services/xrdp-i3.nix` + home-manager as a NixOS module).
+  - `nixosConfigurations."nixos"` — the system (NixOS-WSL module + `configuration.nix` + `services/niri-wayland.nix` + home-manager as a NixOS module).
   - `homeConfigurations."KangaZero"` — standalone home-manager (for `home-manager switch` without a full system rebuild).
 - `nixpkgs` follows `nixos-unstable`. `home-manager` tracks `master` (kept in lockstep with unstable).
 - **System Nix settings live in `configuration.nix`** (`nix.settings`, `nix.gc`) — *not* in a separate module. The old `modules/nix-settings.nix` was consolidated and removed. Legacy channels are disabled (`nix.channel.enable = false`) and the flake registry pins `nixpkgs` to this flake's input.
@@ -155,7 +161,8 @@ home-switch       # home-manager only: home-manager switch --flake /etc/nixos#Ka
 edit-nix          # jump to /etc/nixos and edit flake.nix via sudoedit (uses $EDITOR)
 nixRebuildStatus  # show an in-progress/stuck activation (transient unit + procs)
 nixRebuildKill    # abort a stuck activation and free its unit name
-restart-xrdp      # reap ALL leaked xrdp sessions, then restart xrdp + xrdp-sesman
+weston            # start the desktop: weston --fullscreen -- niri (weston → niri nested)
+niri-session      # start niri standalone (bypasses weston, connects directly to WSLg)
 ff                # launch firefox detached from the shell
 ez                # eza long listing (icons, git, octal perms, dirs first)
 ```
@@ -209,58 +216,42 @@ sudo nixos-rebuild list-generations         # inspect available generations
 
 ---
 
-## i3 Desktop (run Linux as its own desktop)
+## Niri Desktop
 
-A full **X11 i3 tiling desktop**, served over **xrdp** and opened from the Windows
-Remote Desktop client — so WSL gives you a real Linux GUI, not just a terminal.
-i3 is X11-native, so it sidesteps the GL/Wayland-nesting problems of Wayland WMs
-under WSL.
+A **Wayland-native** tiling desktop. The compositor stack is:
 
 ```
-Windows mstsc  ──RDP:3390──▶  xrdp ──▶ its own Xorg (:10, :11, …) ──▶ i3 session
+WSLg (outer display) ──▶ weston (fullscreen, kiosk-shell) ──▶ niri (nested compositor) ──▶ apps
 ```
 
-### System side — `services/xrdp-i3.nix`
+Start it with the `weston` alias. `LIBGL_ALWAYS_SOFTWARE=1` is set session-wide (no `/dev/dri` on WSL).
 
-Imported by `nixosConfigurations.nixos`. Enables Xorg, the i3 window manager, and
-xrdp on **port 3390**:
+### System side — `services/niri-wayland.nix`
 
 ```nix
-services.xserver.enable = true;
-services.xserver.windowManager.i3.enable = true;
-services.xrdp = {
-  enable = true;
-  defaultWindowManager = "i3";
-  port = 3390;          # NOT 3389 — that's Windows' own RDP port (mstsc clash)
-  openFirewall = true;
-};
+programs.niri.enable = true;         # installs niri + wayland-session entry
+programs.xwayland.enable = true;     # X11 app compatibility layer
+environment.systemPackages = [ pkgs.xwayland-satellite ];  # niri XWayland bridge
 ```
 
-> Why 3390: `localhost:3389` hits **Windows'** RDP service (error 0x708 / console
-> clash). WSL's xrdp listens on **3390**.
+### Compositor stack — `modules/config/weston.nix`
 
-### Connect from Windows
+weston is configured with `kiosk-shell.so` so niri fills the entire output with no weston taskbar chrome. The `weston` alias expands to `weston --fullscreen -- niri`.
 
-1. Rebuild so xrdp is running: `sudo nixos-rebuild switch --flake .#nixos`.
-2. Open **Remote Desktop Connection** (`mstsc`) → connect to **`localhost:3390`**.
-3. Log in with your NixOS username/password → you land in i3.
-
-(First login to a fresh user needs a password: `sudo passwd KangaZero`.)
-
-### User side — `modules/i3/`
+### User side — `modules/niri/`
 
 | File | What |
 |---|---|
-| `default.nix` | i3 config: keybinds, gaps, Catppuccin Mocha colors, autostart (wallpaper, dunst, greenclip, polybar), keyboard layout set (`us,jp`) |
-| `rofi.nix`    | rofi launcher + powermenu/cheatsheet/applet themes, and `window`/`combi`/`calc`/`clipboard` modes |
-| `dunst.nix`   | dunst notification daemon (Mocha) |
-| `polybar.nix` | polybar status bar — rounded "island" pills (workspaces/window/**keyboard layout**/cpu/mem/disk/net/clock), replaces i3bar |
-
-Wallpaper is pinned with `fetchurl` and set via `feh --bg-fill` in the i3 autostart.
+| `default.nix` | niri KDL config: keybinds, gaps, focus-ring (Pamela blue), keyboard layouts (`us,jp`), `spawn-at-startup` for awww + waypaper |
+| `waybar.nix` | waybar — `niri/workspaces` + `niri/window` + clock/cpu/mem/disk/net + language indicator; Pamela floating pill CSS |
+| `mako.nix` | mako notification daemon — Pamela palette, urgency tiers (blue/purple/pink) |
+| `rofi.nix` | rofi launcher + powermenu (`niri msg action quit`) + clipboard (cliphist) + cheatsheet |
+| `cliphist.nix` | cliphist daemon via systemd user service + wl-clipboard |
+| `waypaper.nix` | waypaper GUI + awww-daemon systemd service + pinned wallpaper via `fetchurl` |
 
 ### Keybinds (`$mod` = **Alt**)
 
-Super/Win is eaten by Windows over RDP, so the mod key is **Alt**.
+Super/Win is captured by the WSLg window chrome, so the mod key is **Alt**.
 
 | Key | Action |
 |---|---|
@@ -269,38 +260,29 @@ Super/Win is eaten by Windows over RDP, so the mod key is **Alt**.
 | `$mod+Tab` | window switcher |
 | `$mod+Shift+d` | combi (apps + run + windows) |
 | `$mod+c` | calculator (rofi-calc) |
-| `$mod+Shift+v` | clipboard history (greenclip) |
+| `$mod+Shift+v` | clipboard history (cliphist → rofi) |
 | `$mod+Shift+e` | power menu |
-| `$mod+Shift+/` | **keybinding cheatsheet** |
-| `$mod+Shift+q` | kill window |
-| `$mod+h/j/k/l` | focus · `+Shift` to move |
-| `$mod+1..9` | workspaces · `+Shift` to move window |
-| `$mod+f` / `$mod+space` | fullscreen / floating toggle |
-| `$mod+Ctrl+l` | cycle keyboard layout **US ↔ JIS** (`xkb-switch -n`); active layout shown in polybar |
-| `$mod+Shift+r` / `$mod+Shift+c` | restart / reload i3 |
+| `$mod+Shift+/` | keybinding cheatsheet |
+| `$mod+Shift+q` | close window |
+| `$mod+h/j/k/l` | focus left/down/up/right · `+Shift` to move |
+| `$mod+1..9` | switch workspace · `+Shift` to move column |
+| `$mod+f` | fullscreen · `$mod+Shift+f` maximize column |
+| `$mod+space` | float toggle |
+| `$mod+r` | cycle preset column widths · `$mod+±` resize |
+| `$mod+Ctrl+l` | cycle keyboard layout **US ↔ JIS** (niri built-in `switch-layout "next"`) |
 
-rofi navigation is **vim-style**: `Ctrl+j/k` down/up, `Ctrl+h/l` columns.
+rofi navigation is vim-style: `Ctrl+j/k` down/up, `Ctrl+h/l` columns.
 
-### Restart / troubleshoot
-
-xrdp keeps disconnected sessions alive, so reconnecting **stacks** new
-`Xorg + i3 + polybar` instances. The `restart-xrdp` alias reaps them all and
-restarts the listeners:
-
-```bash
-restart-xrdp     # pkill leaked Xorg/i3/polybar/greenclip/chansrv, then restart xrdp
-```
+### Troubleshoot
 
 | Symptom | Fix |
 |---|---|
-| Apps fail with `connect() : Connection refused`, `DISPLAY=:0` | That's the dead **WSLg** display. i3 runs on a separate xrdp Xorg — launch apps from **inside** i3 (rofi/keybind) so they get the session's `DISPLAY`. |
-| Wallpaper / polybar background renders black | No compositor on xrdp; polybar uses pseudo-transparency off the wallpaper. If the wallpaper itself is black, the WSLg compositor is dead → `wsl --shutdown` from Windows. |
-| Multiple cursors / duplicate bars after reconnecting | Leaked sessions — run `restart-xrdp`, then reconnect for one clean session. |
-| polybar icons show as boxes (□) | Nerd Font glyph missing — `fc-cache -f` then reconnect. |
-
-> WSL limits: no compositor (so no true transparency/blur), `$mod` is Alt (not
-> Super), and a dead WSLg `:0` only affects apps launched outside the xrdp
-> session.
+| `weston` opens but niri doesn't start | Check `journalctl --user -u niri.service -n 30`. Most likely a KDL config parse error — run `niri validate --config ~/.config/niri/config.kdl`. |
+| No wallpaper on start | awww-daemon takes ~2 s to init. If it never appears, check `journalctl --user -u awww-daemon` — it needs a running Wayland socket. |
+| Waybar not visible | waybar starts via `graphical-session.target`; if niri was launched outside systemd that target won't fire. Add `spawn-at-startup "waybar"` to `default.nix` as a fallback. |
+| GL errors / niri SEGV | `LIBGL_ALWAYS_SOFTWARE=1` is set in session variables — verify with `echo $LIBGL_ALWAYS_SOFTWARE`. If unset, re-login or `home-switch`. |
+| X11 apps broken | `xwayland-satellite` must be on PATH (`which xwayland-satellite`). Rebuild system if missing. |
+| WSLg window shows weston chrome | weston.ini must have `shell=kiosk-shell.so` in `[core]`. Run `home-switch` to re-apply. |
 
 ---
 
@@ -419,9 +401,14 @@ Edit the relevant file:
 - Global git identity → `modules/git.nix`
 - Kitty terminal → `modules/kitty.nix`
 - Firefox (policies + extensions) → `modules/firefox.nix`
-- i3 desktop (keybinds, bar, launcher, notifications, wallpaper) → `modules/i3/`
+- niri desktop (keybinds, layout, autostart) → `modules/niri/default.nix`
+- Waybar (bar, modules, CSS) → `modules/niri/waybar.nix`
+- Mako (notifications) → `modules/niri/mako.nix`
+- Rofi (launcher, powermenu, clipboard) → `modules/niri/rofi.nix`
+- Wallpaper (waypaper + awww) → `modules/niri/waypaper.nix`
+- Weston (base compositor ini) → `modules/config/weston.nix`
+- niri system install + xwayland → `services/niri-wayland.nix`
 - Steam (system program) → `modules/system/steam.nix`
-- xrdp / X server (the desktop transport) → `services/xrdp-i3.nix`
 
 New tool/program → create `modules/<name>.nix` and add it to the `imports` list
 in `home.nix` (user scope) or to `configuration.nix` (system scope).
@@ -443,8 +430,7 @@ Apply: `sudo nixos-rebuild switch --flake .#nixos`.
 | `sudo nvim` uses vanilla config | Root config symlink missing — re-run `sudo nixos-rebuild switch`. Or use `sudoedit`. |
 | WSL drops into bash on launch | Set `users.users.<name>.shell = pkgs.zsh` (Option A) or rely on the bash trampoline. Then `wsl --shutdown`. |
 | Flake ignores a new file | The flake only sees git-tracked files. `git add` it before rebuilding. |
-| Can't connect via Remote Desktop | xrdp listens on **3390** (not 3389). Rebuild, then `mstsc` → `localhost:3390`. See [i3 Desktop](#i3-desktop-run-linux-as-its-own-desktop). |
-| Stacked bars/cursors or `Connection refused` after reconnecting RDP | Leaked xrdp sessions — run `restart-xrdp`, then reconnect for one clean session. |
+| Desktop doesn't start | Run `weston` in a WSLg terminal. If weston opens but niri fails, run `niri validate --config ~/.config/niri/config.kdl`. |
 
 ---
 
@@ -453,6 +439,36 @@ Apply: `sudo nixos-rebuild switch --flake .#nixos`.
 - NixOS-WSL: https://github.com/nix-community/NixOS-WSL
 - NixOS manual (unstable): https://nixos.org/manual/nixos/unstable/
 - Home-manager: https://nix-community.github.io/home-manager/
+- nix.dev best practices: https://nix.dev/guides/best-practices.html
 - statix: https://github.com/oppiliappan/statix
 - deadnix: https://github.com/astro/deadnix
 - git-hooks.nix: https://github.com/cachix/git-hooks.nix
+
+---
+
+## Credits
+
+Sources and inspiration for the desktop configs:
+
+### Niri desktop
+
+| What | Source |
+|---|---|
+| niri WM | https://github.com/YaLTeR/niri — KDL config reference: `resources/default-config.kdl` |
+| niri IPC schema | https://github.com/YaLTeR/niri/blob/main/niri-ipc/src/lib.rs |
+| awesome-niri (tool list) | https://github.com/niri-wm/awesome-niri |
+| xwayland-satellite | https://github.com/Supreeeme/xwayland-satellite |
+| waypaper | https://github.com/anufrievroman/waypaper |
+| awww (wallpaper daemon, formerly swww) | https://codeberg.org/LGFae/awww |
+
+### Rice / theming
+
+| What | Source |
+|---|---|
+| **Pamela color palette** (bar, mako, niri borders) | [gh0stzk/dotfiles](https://github.com/gh0stzk/dotfiles) — `config/bspwm/rices/pamela/config.ini` |
+| Segmented floating-pill bar design | gh0stzk/dotfiles Pamela rice — adapted from polybar multi-bar layout to Waybar CSS |
+| rofi themes (launcher / powermenu / applet `.rasi`) | [adi1090x/rofi](https://github.com/adi1090x/rofi) — `launchers/type-1/style-1`, `powermenu/type-1/style-1`, `applets/type-1/style-1`; palette inlined, no runtime `@import` |
+
+### Wallpaper
+
+Pinned via `pkgs.fetchurl` from [dharmx/walls](https://github.com/dharmx/walls) — `outrun/a_street_with_buildings_and_signs.png`.
