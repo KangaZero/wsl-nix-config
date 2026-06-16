@@ -1,24 +1,105 @@
-{ pkgs, ... }:
+{ pkgs, lib, ... }:
 {
-  home.packages = [ pkgs.noctalia-shell ];
+  # noctalia uses cliphist + wl-paste internally for clipboard history
+  home.packages = with pkgs; [
+    noctalia-shell
+    cliphist
+    wl-clipboard
+  ];
 
-  home.file.".config/noctalia/config.toml".text = ''
-    [compositor]
-    type = "niri"
+  # Config: ~/.config/noctalia/settings.json
+  # Path derived from Settings.qml: shellName="noctalia", XDG_CONFIG_HOME fallback ~/.config
+  home.file.".config/noctalia/settings.json".text = builtins.toJSON {
+    settingsVersion = 0;
 
-    [bar]
-    enabled = true
+    bar = {
+      barType = "simple";
+      position = "top";
+      monitors = [ ];
+      density = "default";
+      showCapsule = true;
+      capsuleOpacity = 1;
+      backgroundOpacity = 0.93;
+      marginVertical = 4;
+      marginHorizontal = 4;
+      frameRadius = 12;
+      outerCorners = true;
+      displayMode = "always_visible";
+      widgets = {
+        left = [
+          { id = "Launcher"; }
+          { id = "ActiveWindow"; }
+        ];
+        center = [
+          { id = "Workspace"; }
+        ];
+        right = [
+          { id = "SystemMonitor"; }
+          { id = "NotificationHistory"; }
+          { id = "Battery"; }
+          { id = "Volume"; }
+          { id = "ControlCenter"; }
+        ];
+      };
+    };
 
-    [notifications]
-    enabled = true
+    general = {
+      showChangelogOnStartup = false;
+      telemetryEnabled = false;
+      enableShadows = true;
+      enableBlurBehind = true;
+      animationSpeed = 1;
+    };
 
-    [wallpaper]
-    enabled = true
-    folder = "~/Wallpapers"
+    colorSchemes = {
+      darkMode = true;
+      predefinedScheme = "Noctalia (default)";
+      useWallpaperColors = true; # generate palette from wallpaper
+      generationMethod = "tonal-spot";
+      syncGsettings = false; # no GNOME on WSL
+    };
 
-    [clipboard]
-    enabled = true
-  '';
+    wallpaper = {
+      enabled = true;
+      directory = "~/Wallpapers";
+      fillMode = "crop";
+      setWallpaperOnAllMonitors = true;
+      transitionDuration = 1000;
+      transitionType = [ "fade" ];
+    };
+
+    appLauncher = {
+      terminalCommand = "${lib.getExe pkgs.kitty} -e";
+      enableClipboardHistory = true;
+      clipboardWatchTextCommand = "wl-paste --type text --watch cliphist store";
+      clipboardWatchImageCommand = "wl-paste --type image --watch cliphist store";
+      sortByMostUsed = true;
+      position = "center";
+      viewMode = "list";
+      showCategories = true;
+    };
+
+    notifications = {
+      enabled = true;
+      location = "top_right";
+      lowUrgencyDuration = 5;
+      normalUrgencyDuration = 8;
+      criticalUrgencyDuration = 0; # persistent
+    };
+
+    dock.enabled = false; # niri handles tiling, no dock needed
+
+    noctaliaPerformance = {
+      disableWallpaper = false;
+      disableDesktopWidgets = true;
+    };
+
+    idle.enabled = false; # no idle management on WSL
+
+    nightLight.enabled = false;
+
+    hooks.enabled = false;
+  };
 
   systemd.user.services.noctalia-shell = {
     Unit = {
