@@ -43,6 +43,10 @@
       edit-nix = "z /etc/nixos && sudoedit flake.nix";
       home-switch = "home-manager switch --flake /etc/nixos#KangaZero";
       nix-switch = "sudo nixos-rebuild switch --flake /etc/nixos#nixos";
+      # weston bridges WSLg → niri. niri cannot connect to WSLg's Wayland
+      # socket directly (winit/wayland-rs incompatibility). weston acts as the
+      # intermediate compositor, then niri nests inside it.
+      weston = "weston --fullscreen -- niri";
       niri-session = "niri-session";
       # Launch Firefox detached from the shell (survives terminal close, no output spam)
       ff = "setsid firefox-devedition >/dev/null 2>&1 < /dev/null &";
@@ -50,7 +54,6 @@
       nixRebuildStatus = "systemctl --no-pager status nixos-rebuild-switch-to-configuration.service 2>/dev/null; pgrep -af 'nixos-rebuild|switch-to-configuration' || echo 'no rebuild running'";
       # Abort a stuck activation: stop the transient unit and free its name
       nixRebuildKill = "sudo systemctl stop nixos-rebuild-switch-to-configuration.service 2>/dev/null; sudo systemctl reset-failed nixos-rebuild-switch-to-configuration.service 2>/dev/null; echo 'cleared stale activation unit'";
-      weston = "weston --fullscreen -- niri";
       ez = "eza -laF --icons=always --group-directories-first --git-repos-no-status --octal-permissions --modified --numeric";
       cheatsheet-az = ''
         cat <<'EOF' | bat --language=md --style=plain

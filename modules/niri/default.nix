@@ -52,6 +52,11 @@ in
     // borders). Niri draws focus rings itself; CSD wastes vertical space.
     prefer-no-csd
 
+    // ─── Autostart ───────────────────────────────────────────────────────────
+    // Launched via `weston --fullscreen -- niri` (not niri-session), so
+    // graphical-session.target never fires. Spawn services directly.
+    spawn-at-startup "noctalia-shell"
+
     // ─── Keybinds ────────────────────────────────────────────────────────────
     // Mod = Alt.  Super is captured by Windows/WSLg window chrome.
     binds {
