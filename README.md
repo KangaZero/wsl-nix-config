@@ -14,11 +14,9 @@ a single flake.
 - CLI toolkit (`modules/packages.nix`): `fzf`, `zoxide`, `ripgrep`, `bat`, `eza`, `fd`, `jq`, `btop`, `tldr`, `just`, `azure-cli` (+ devops ext); TUIs `yazi`, `zellij`, `lazygit`; `claude-code`; font `nerd-fonts.jetbrains-mono`
 - Terminal: `kitty` (declarative — Tokyo Night Moon theme, `modules/kitty.nix`). An `alacritty` config also exists in the Windows filesystem.
 - Desktop: **niri** Wayland tiling compositor, running nested inside **weston** (fullscreen, kiosk-shell). WSLg is the outermost display. See [Niri Desktop](#niri-desktop).
-- Bar / notifications / launcher: `waybar` (Pamela floating pills) + `mako` + `rofi` (`modules/niri/`).
-- Wallpaper: `waypaper` GUI frontend + `awww` daemon (`modules/niri/waypaper.nix`), pinned wallpaper via `fetchurl`.
-- Clipboard: `cliphist` + `wl-clipboard` replacing greenclip (`modules/niri/cliphist.nix`).
+- Shell / bar / notifications / launcher / wallpaper / clipboard: **noctalia-shell** — single QML shell replacing waybar + mako + waypaper + cliphist GUI. Config at `~/.config/noctalia/settings.json` (`modules/niri/noctalia.nix`). Clipboard history backed by `cliphist` + `wl-clipboard`. Rofi kept for the clipboard picker and powermenu.
 - Browser: `firefox` Developer Edition, declarative via `programs.firefox` (`modules/firefox.nix`) — policy hardening + Vimium.
-- Gaming: `steam` enabled system-wide (`modules/system/steam.nix`) — Remote Play + dedicated-server firewall, forced to launch from `$HOME` to dodge bwrap FHS sandbox chdir failures.
+- Gaming: `steam` module exists (`modules/system/steam.nix`) — Remote Play + dedicated-server firewall, forced to launch from `$HOME` to dodge bwrap FHS sandbox chdir failures. **Currently commented out** in `configuration.nix` — uncomment the import to enable.
 
 ---
 
@@ -43,13 +41,12 @@ a single flake.
 │   ├── firefox.nix                # firefox Dev Edition — programs.firefox policies + Vimium
 │   ├── config/
 │   │   └── weston.nix             # weston.ini — kiosk-shell, fullscreen output (base compositor)
-│   ├── niri/                      # niri Wayland desktop (Pamela palette)
+│   ├── niri/                      # niri Wayland desktop
 │   │   ├── default.nix            # niri KDL config: keybinds, gaps, focus-ring, autostart
-│   │   ├── waybar.nix             # waybar — niri/workspaces pills, Pamela CSS, language indicator
-│   │   ├── mako.nix               # mako notification daemon (Pamela palette, urgency tiers)
+│   │   ├── noctalia.nix           # noctalia-shell: bar + notifications + launcher + wallpaper; settings.json
 │   │   ├── rofi.nix               # rofi: launcher/powermenu/cheatsheet/clipboard themes + modes
-│   │   ├── cliphist.nix           # cliphist daemon + wl-clipboard
-│   │   └── waypaper.nix           # waypaper GUI + awww daemon + pinned wallpaper
+│   │   ├── cliphist.nix           # cliphist + wl-clipboard (used by noctalia clipboard history)
+│   │   └── waypaper.nix           # (unused — superseded by noctalia wallpaper engine)
 │   └── system/
 │       └── steam.nix              # SYSTEM: programs.steam (Remote Play firewall, $HOME launch fix)
 ├── assets/                        # wallpapers / images referenced by configs (kitty bg, etc.)
@@ -226,6 +223,21 @@ WSLg (outer display) ──▶ weston (fullscreen, kiosk-shell) ──▶ niri (
 
 Start it with the `weston` alias. `LIBGL_ALWAYS_SOFTWARE=1` is set session-wide (no `/dev/dri` on WSL).
 
+> **Warning — latency & weston dependency**
+>
+> Because niri cannot connect to WSLg's Wayland socket directly (winit/wayland-rs incompatibility),
+> **weston is a required bridge**. This double-compositor hop introduces rendering latency that scales
+> with your machine's CPU/GPU performance — on slower hardware you may notice noticeable lag.
+>
+> If the `weston` alias fails to launch (e.g. "Connection refused" or compositor errors), **restart
+> WSL first**: run `wsl --shutdown` from PowerShell, reopen the distro, and try `weston` again. A
+> stale WSLg compositor process is the most common cause.
+
+<!-- TODO: import noctalia config declaratively via home-manager (modules/niri/noctalia.nix currently
+     writes settings.json but the full noctalia KDE/QML config (themes, widget layout overrides)
+     is not yet sourced into Nix — import it in. -->
+
+
 ### System side — `services/niri-wayland.nix`
 
 ```nix
@@ -242,12 +254,11 @@ weston is configured with `kiosk-shell.so` so niri fills the entire output with 
 
 | File | What |
 |---|---|
-| `default.nix` | niri KDL config: keybinds, gaps, focus-ring (Pamela blue), keyboard layouts (`us,jp`), `spawn-at-startup` for awww + waypaper |
-| `waybar.nix` | waybar — `niri/workspaces` + `niri/window` + clock/cpu/mem/disk/net + language indicator; Pamela floating pill CSS |
-| `mako.nix` | mako notification daemon — Pamela palette, urgency tiers (blue/purple/pink) |
-| `rofi.nix` | rofi launcher + powermenu (`niri msg action quit`) + clipboard (cliphist) + cheatsheet |
-| `cliphist.nix` | cliphist daemon via systemd user service + wl-clipboard |
-| `waypaper.nix` | waypaper GUI + awww-daemon systemd service + pinned wallpaper via `fetchurl` |
+| `default.nix` | niri KDL config: keybinds, gaps, focus-ring (Pamela blue), keyboard layouts (`us,jp`), `spawn-at-startup noctalia-shell` |
+| `noctalia.nix` | noctalia-shell — bar, notifications, app launcher, wallpaper engine, clipboard history; declarative `settings.json` via `home.file` |
+| `rofi.nix` | rofi launcher + powermenu (`niri msg action quit`) + clipboard picker (cliphist) + cheatsheet |
+| `cliphist.nix` | cliphist + wl-clipboard packages (clipboard watching managed by noctalia) |
+| `waypaper.nix` | unused — superseded by noctalia's wallpaper engine |
 
 ### Keybinds (`$mod` = **Alt**)
 
@@ -277,12 +288,13 @@ rofi navigation is vim-style: `Ctrl+j/k` down/up, `Ctrl+h/l` columns.
 
 | Symptom | Fix |
 |---|---|
-| `weston` opens but niri doesn't start | Check `journalctl --user -u niri.service -n 30`. Most likely a KDL config parse error — run `niri validate --config ~/.config/niri/config.kdl`. |
-| No wallpaper on start | awww-daemon takes ~2 s to init. If it never appears, check `journalctl --user -u awww-daemon` — it needs a running Wayland socket. |
-| Waybar not visible | waybar starts via `graphical-session.target`; if niri was launched outside systemd that target won't fire. Add `spawn-at-startup "waybar"` to `default.nix` as a fallback. |
+| `weston` alias fails / "Connection refused" | Stale WSLg compositor. Run `wsl --shutdown` from PowerShell, reopen the distro, then try `weston` again. |
+| `weston` opens but niri doesn't start | KDL parse error. Run `niri validate --config ~/.config/niri/config.kdl`. |
+| noctalia-shell doesn't appear | It's spawned by niri's `spawn-at-startup`. If niri started cleanly, check `noctalia-shell` is on PATH (`which noctalia-shell`). Run `home-switch` if missing. |
 | GL errors / niri SEGV | `LIBGL_ALWAYS_SOFTWARE=1` is set in session variables — verify with `echo $LIBGL_ALWAYS_SOFTWARE`. If unset, re-login or `home-switch`. |
 | X11 apps broken | `xwayland-satellite` must be on PATH (`which xwayland-satellite`). Rebuild system if missing. |
 | WSLg window shows weston chrome | weston.ini must have `shell=kiosk-shell.so` in `[core]`. Run `home-switch` to re-apply. |
+| High input lag / slow rendering | Expected on slower machines — the weston→niri double-compositor hop has overhead. No fix; it's architectural. |
 
 ---
 
@@ -402,10 +414,8 @@ Edit the relevant file:
 - Kitty terminal → `modules/kitty.nix`
 - Firefox (policies + extensions) → `modules/firefox.nix`
 - niri desktop (keybinds, layout, autostart) → `modules/niri/default.nix`
-- Waybar (bar, modules, CSS) → `modules/niri/waybar.nix`
-- Mako (notifications) → `modules/niri/mako.nix`
-- Rofi (launcher, powermenu, clipboard) → `modules/niri/rofi.nix`
-- Wallpaper (waypaper + awww) → `modules/niri/waypaper.nix`
+- noctalia-shell (bar, notifications, launcher, wallpaper, clipboard) → `modules/niri/noctalia.nix`
+- Rofi (launcher, powermenu, clipboard picker) → `modules/niri/rofi.nix`
 - Weston (base compositor ini) → `modules/config/weston.nix`
 - niri system install + xwayland → `services/niri-wayland.nix`
 - Steam (system program) → `modules/system/steam.nix`
@@ -430,7 +440,7 @@ Apply: `sudo nixos-rebuild switch --flake .#nixos`.
 | `sudo nvim` uses vanilla config | Root config symlink missing — re-run `sudo nixos-rebuild switch`. Or use `sudoedit`. |
 | WSL drops into bash on launch | Set `users.users.<name>.shell = pkgs.zsh` (Option A) or rely on the bash trampoline. Then `wsl --shutdown`. |
 | Flake ignores a new file | The flake only sees git-tracked files. `git add` it before rebuilding. |
-| Desktop doesn't start | Run `weston` in a WSLg terminal. If weston opens but niri fails, run `niri validate --config ~/.config/niri/config.kdl`. |
+| Desktop doesn't start | Run `weston` in a WSLg terminal. If the alias errors, run `wsl --shutdown` from PowerShell and retry. If weston opens but niri fails, run `niri validate --config ~/.config/niri/config.kdl`. |
 
 ---
 
