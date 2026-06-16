@@ -101,17 +101,7 @@
     hooks.enabled = false;
   };
 
-  systemd.user.services.noctalia-shell = {
-    Unit = {
-      Description = "Noctalia desktop shell";
-      PartOf = [ "graphical-session.target" ];
-      After = [ "graphical-session.target" ];
-    };
-    Service = {
-      ExecStart = "${pkgs.noctalia-shell}/bin/noctalia-shell";
-      Restart = "on-failure";
-      RestartSec = "3s";
-    };
-    Install.WantedBy = [ "graphical-session.target" ];
-  };
+  # noctalia launched by niri's `spawn-at-startup` (see modules/niri/default.nix).
+  # No systemd user service: weston bridge runs plain `niri` (not `niri --session`),
+  # so graphical-session.target never fires and any unit bound to it stays dead.
 }
