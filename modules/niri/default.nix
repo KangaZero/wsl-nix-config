@@ -3,6 +3,8 @@ let
   # Pamela palette — used in focus-ring and mako border (mako.nix mirrors these).
   colorFocusActive = "#8897F4";
   colorFocusInactive = "#2f354b";
+  colorBorderActive = "#c099ff";
+  colorBorderInactive = "#c8d3f5";
 
   # Clipboard-history picker: lists cliphist entries in rofi, pipes selection
   # back through cliphist decode, then writes to the Wayland clipboard.
@@ -23,113 +25,193 @@ in
   ];
 
   xdg.configFile."niri/config.kdl".text = ''
-    // ─── Input ───────────────────────────────────────────────────────────────
-    input {
-        keyboard {
-            xkb {
-                layout "us,jp"
+            // ─── Input ───────────────────────────────────────────────────────────────
+            input {
+                keyboard {
+                    xkb {
+                        layout "us,jp"
+                    }
+                }
+
+                touchpad {
+                    tap
+                    natural-scroll
+                }
+            }
+
+            // ─── Layout ──────────────────────────────────────────────────────────────
+            layout {
+                always-center-single-column
+                gaps 8
+
+                focus-ring {
+        	    on
+                    width 2
+                    active-color "${colorFocusActive}"
+                    inactive-color "${colorFocusInactive}"
+                }
+        	border {
+                   on
+    	       width 3
+        	   active-color "${colorBorderActive}"
+    	   inactive-color "${colorBorderInactive}"
+    		}
+            }
+
+            // ─── Gestures ──────────────────────────────────────────────────────────────
+    	gestures {
+              hot-corners {
+                on
+    	    bottom-right
+    	  }
+    	}
+
+            // ─── Animations ──────────────────────────────────────────────────────────────
+            animations {
+            // Uncomment to turn off all animations.
+            // You can also put "off" into each individual animation to disable it.
+            // off
+
+            // Slow down all animations by this factor. Values below 1 speed them up instead.
+            // slowdown 3.0
+
+            // Individual animations.
+
+            workspace-switch {
+                spring damping-ratio=1.0 stiffness=1000 epsilon=0.0001
+            }
+
+            window-open {
+                duration-ms 150
+                curve "ease-out-expo"
+            }
+
+            window-close {
+                duration-ms 150
+                curve "ease-out-quad"
+            }
+
+            horizontal-view-movement {
+                spring damping-ratio=1.0 stiffness=800 epsilon=0.0001
+            }
+
+            window-movement {
+                spring damping-ratio=1.0 stiffness=800 epsilon=0.0001
+            }
+
+            window-resize {
+                spring damping-ratio=1.0 stiffness=800 epsilon=0.0001
+            }
+
+            config-notification-open-close {
+                spring damping-ratio=0.6 stiffness=1000 epsilon=0.001
+            }
+
+            exit-confirmation-open-close {
+                spring damping-ratio=0.6 stiffness=500 epsilon=0.01
+            }
+
+            screenshot-ui-open {
+                duration-ms 200
+                curve "ease-out-quad"
+            }
+
+            overview-open-close {
+                spring damping-ratio=1.0 stiffness=800 epsilon=0.0001
+            }
+
+            recent-windows-close {
+                spring damping-ratio=1.0 stiffness=800 epsilon=0.001
             }
         }
 
-        touchpad {
-            tap
-            natural-scroll
-        }
-    }
+            // Instruct clients to omit their server-side decoration chrome (titlebars,
+            // borders). Niri draws focus rings itself; CSD wastes vertical space.
+            prefer-no-csd
 
-    // ─── Layout ──────────────────────────────────────────────────────────────
-    layout {
-        gaps 8
+            // ─── Autostart ───────────────────────────────────────────────────────────
+            // Launched via `weston --fullscreen -- niri` (not niri-session), so
+            // graphical-session.target never fires. Spawn services directly.
+            spawn-at-startup "noctalia-shell"
 
-        focus-ring {
-            width 2
-            active-color "${colorFocusActive}"
-            inactive-color "${colorFocusInactive}"
-        }
-    }
+            // ─── Keybinds ────────────────────────────────────────────────────────────
+            // Mod = Alt.  Super is captured by Windows/WSLg window chrome.
+            binds {
+                // ── Launchers ──────────────────────────────────────────────────────
+                Alt+Return { spawn "kitty"; }
+                Alt+Shift+Return { spawn "firefox-devedition"; }
+                Alt+D      { spawn "rofi" "-show" "drun"; }
+                Alt+Tab    { spawn "rofi" "-show" "window"; }
+                Alt+Shift+D { spawn "rofi" "-show" "combi"; }
+                Alt+C      { spawn "rofi" "-show" "calc" "-no-show-match" "-no-sort"; }
+                Alt+Shift+V { spawn "sh" "-c" "${cliphist-picker}"; }
+                Alt+Shift+Slash { spawn "rofi-cheatsheet"; }
+                Alt+Shift+E     { spawn "rofi-powermenu"; }
 
-    // Instruct clients to omit their server-side decoration chrome (titlebars,
-    // borders). Niri draws focus rings itself; CSD wastes vertical space.
-    prefer-no-csd
+                // ── Window management ──────────────────────────────────────────────
+                Alt+Shift+Q repeat=false { close-window; }
+                Alt+F               { fullscreen-window; }
+                Alt+Shift+F         { maximize-column; }
+                Alt+Space           { toggle-window-floating; }
 
-    // ─── Autostart ───────────────────────────────────────────────────────────
-    // Launched via `weston --fullscreen -- niri` (not niri-session), so
-    // graphical-session.target never fires. Spawn services directly.
-    spawn-at-startup "noctalia-shell"
+                // ── Focus — vim keys ──────────────────────────────────────────────
+                Alt+H { focus-column-left; }
+                Alt+J { focus-window-down; }
+                Alt+K { focus-window-up; }
+                Alt+L { focus-column-right; }
 
-    // ─── Keybinds ────────────────────────────────────────────────────────────
-    // Mod = Alt.  Super is captured by Windows/WSLg window chrome.
-    binds {
-        // ── Launchers ──────────────────────────────────────────────────────
-        Alt+Return { spawn "kitty"; }
-        Alt+D      { spawn "rofi" "-show" "drun"; }
-        Alt+Tab    { spawn "rofi" "-show" "window"; }
-        Alt+Shift+D { spawn "rofi" "-show" "combi"; }
-        Alt+C      { spawn "rofi" "-show" "calc" "-no-show-match" "-no-sort"; }
-        Alt+Shift+V { spawn "sh" "-c" "${cliphist-picker}"; }
-        Alt+Shift+Slash { spawn "rofi-cheatsheet"; }
-        Alt+Shift+E     { spawn "rofi-powermenu"; }
+                // ── Focus — arrow keys ────────────────────────────────────────────
+                Alt+Left  { focus-column-left; }
+                Alt+Down  { focus-window-down; }
+                Alt+Up    { focus-window-up; }
+                Alt+Right { focus-column-right; }
 
-        // ── Window management ──────────────────────────────────────────────
-        Alt+Shift+Q repeat=false { close-window; }
-        Alt+F               { fullscreen-window; }
-        Alt+Shift+F         { maximize-column; }
-        Alt+Space           { toggle-window-floating; }
+                // ── Move — vim keys ───────────────────────────────────────────────
+                Alt+Shift+H { move-column-left; }
+                Alt+Shift+J { move-window-down; }
+                Alt+Shift+K { move-window-up; }
+                Alt+Shift+L { move-column-right; }
 
-        // ── Focus — vim keys ──────────────────────────────────────────────
-        Alt+H { focus-column-left; }
-        Alt+J { focus-window-down; }
-        Alt+K { focus-window-up; }
-        Alt+L { focus-column-right; }
+                // ── Move — arrow keys ─────────────────────────────────────────────
+                Alt+Shift+Left  { move-column-left; }
+                Alt+Shift+Down  { move-window-down; }
+                Alt+Shift+Up    { move-window-up; }
+                Alt+Shift+Right { move-column-right; }
 
-        // ── Focus — arrow keys ────────────────────────────────────────────
-        Alt+Left  { focus-column-left; }
-        Alt+Down  { focus-window-down; }
-        Alt+Up    { focus-window-up; }
-        Alt+Right { focus-column-right; }
+                // ── Workspaces ────────────────────────────────────────────────────
+                Alt+1 { focus-workspace 1; }
+                Alt+2 { focus-workspace 2; }
+                Alt+3 { focus-workspace 3; }
+                Alt+4 { focus-workspace 4; }
+                Alt+5 { focus-workspace 5; }
+                Alt+6 { focus-workspace 6; }
+                Alt+7 { focus-workspace 7; }
+                Alt+8 { focus-workspace 8; }
+                Alt+9 { focus-workspace 9; }
 
-        // ── Move — vim keys ───────────────────────────────────────────────
-        Alt+Shift+H { move-column-left; }
-        Alt+Shift+J { move-window-down; }
-        Alt+Shift+K { move-window-up; }
-        Alt+Shift+L { move-column-right; }
+                Alt+Shift+1 { move-column-to-workspace 1; }
+                Alt+Shift+2 { move-column-to-workspace 2; }
+                Alt+Shift+3 { move-column-to-workspace 3; }
+                Alt+Shift+4 { move-column-to-workspace 4; }
+                Alt+Shift+5 { move-column-to-workspace 5; }
+                Alt+Shift+6 { move-column-to-workspace 6; }
+                Alt+Shift+7 { move-column-to-workspace 7; }
+                Alt+Shift+8 { move-column-to-workspace 8; }
+                Alt+Shift+9 { move-column-to-workspace 9; }
 
-        // ── Move — arrow keys ─────────────────────────────────────────────
-        Alt+Shift+Left  { move-column-left; }
-        Alt+Shift+Down  { move-window-down; }
-        Alt+Shift+Up    { move-window-up; }
-        Alt+Shift+Right { move-column-right; }
+                // ── Workspace scroll ──────────────────────────────────────────────
+                Alt+WheelScrollDown cooldown-ms=150 { focus-workspace-down; }
+                Alt+WheelScrollUp   cooldown-ms=150 { focus-workspace-up; }
 
-        // ── Workspaces ────────────────────────────────────────────────────
-        Alt+1 { focus-workspace 1; }
-        Alt+2 { focus-workspace 2; }
-        Alt+3 { focus-workspace 3; }
-        Alt+4 { focus-workspace 4; }
-        Alt+5 { focus-workspace 5; }
-        Alt+6 { focus-workspace 6; }
-        Alt+7 { focus-workspace 7; }
-        Alt+8 { focus-workspace 8; }
-        Alt+9 { focus-workspace 9; }
+                // ── Resize ────────────────────────────────────────────────────────
+                Alt+R       { switch-preset-column-width; }
+                Alt+Minus   { set-column-width "-10%"; }
+                Alt+Equal   { set-column-width "+10%"; }
+                Alt+Shift+Minus { set-window-height "-10%"; }
+                Alt+Shift+Equal { set-window-height "+10%"; }
 
-        Alt+Shift+1 { move-column-to-workspace 1; }
-        Alt+Shift+2 { move-column-to-workspace 2; }
-        Alt+Shift+3 { move-column-to-workspace 3; }
-        Alt+Shift+4 { move-column-to-workspace 4; }
-        Alt+Shift+5 { move-column-to-workspace 5; }
-
-        // ── Workspace scroll ──────────────────────────────────────────────
-        Alt+WheelScrollDown cooldown-ms=150 { focus-workspace-down; }
-        Alt+WheelScrollUp   cooldown-ms=150 { focus-workspace-up; }
-
-        // ── Resize ────────────────────────────────────────────────────────
-        Alt+R       { switch-preset-column-width; }
-        Alt+Minus   { set-column-width "-10%"; }
-        Alt+Equal   { set-column-width "+10%"; }
-        Alt+Shift+Minus { set-window-height "-10%"; }
-        Alt+Shift+Equal { set-window-height "+10%"; }
-
-        // ── Keyboard layout toggle ─────────────────────────────────────────
-        Alt+Ctrl+L { switch-layout "next"; }
-    }
+                // ── Keyboard layout toggle ─────────────────────────────────────────
+                Alt+Ctrl+L { switch-layout "next"; }
+            }
   '';
 }
