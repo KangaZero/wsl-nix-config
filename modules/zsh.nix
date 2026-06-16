@@ -43,8 +43,6 @@
       edit-nix = "z /etc/nixos && sudoedit flake.nix";
       home-switch = "home-manager switch --flake /etc/nixos#KangaZero";
       nix-switch = "sudo nixos-rebuild switch --flake /etc/nixos#nixos";
-      # Start niri Wayland session (sets up DBus, activates graphical-session.target, then runs niri).
-      # WSLg provides WAYLAND_DISPLAY=wayland-0; niri runs nested under the WSLg compositor.
       niri-session = "niri-session";
       # Launch Firefox detached from the shell (survives terminal close, no output spam)
       ff = "setsid firefox-devedition >/dev/null 2>&1 < /dev/null &";

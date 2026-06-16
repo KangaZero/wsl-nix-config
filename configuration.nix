@@ -92,7 +92,6 @@
       git
       neovim
       nixd
-      weston
       ;
   };
   # This value determines the NixOS release from which the default

@@ -55,15 +55,6 @@ in
     // borders). Niri draws focus rings itself; CSD wastes vertical space.
     prefer-no-csd
 
-    // ─── Autostart ───────────────────────────────────────────────────────────
-    // graphical-session.target never fires when niri is launched from weston
-    // manually (not a systemd session), so all desktop services must be
-    // started here instead of relying on systemd user units.
-    spawn-at-startup "waybar"
-    spawn-at-startup "mako"
-    spawn-at-startup "awww-daemon"
-    spawn-at-startup "sh" "-c" "sleep 2 && waypaper --restore"
-
     // ─── Keybinds ────────────────────────────────────────────────────────────
     // Mod = Alt.  Super is captured by Windows/WSLg window chrome.
     binds {
