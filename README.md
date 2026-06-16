@@ -14,7 +14,7 @@ a single flake.
 - CLI toolkit (`modules/packages.nix`): `fzf`, `zoxide`, `ripgrep`, `bat`, `eza`, `fd`, `jq`, `btop`, `tldr`, `just`, `azure-cli` (+ devops ext); TUIs `yazi`, `zellij`, `lazygit`; `claude-code`; font `nerd-fonts.jetbrains-mono`
 - Terminal: `kitty` (declarative — Tokyo Night Moon theme, `modules/kitty.nix`). An `alacritty` config also exists in the Windows filesystem.
 - Desktop: **niri** Wayland tiling compositor, running nested inside **weston** (fullscreen, kiosk-shell). WSLg is the outermost display. See [Niri Desktop](#niri-desktop).
-- Shell / bar / notifications / launcher / wallpaper / clipboard: **noctalia-shell** — single QML shell replacing waybar + mako + waypaper + cliphist daemon. Config at `~/.config/noctalia/settings.json` (`modules/niri/noctalia.nix`). Clipboard history backed by `cliphist` + `wl-clipboard`. Rofi kept for the clipboard picker and powermenu.
+- Shell / bar / notifications / launcher / wallpaper / clipboard: **noctalia-shell** — single QML shell. Config at `~/.config/noctalia/settings.json` (`modules/niri/noctalia.nix`). Clipboard history backed by `cliphist` + `wl-clipboard`. Rofi kept for the clipboard picker and powermenu.
 - Browser: `firefox` Developer Edition, declarative via `programs.firefox` (`modules/firefox.nix`) — policy hardening + Vimium.
 - Gaming: `steam` module exists (`modules/system/steam.nix`) — Remote Play + dedicated-server firewall, forced to launch from `$HOME` to dodge bwrap FHS sandbox chdir failures. **Currently commented out** in `configuration.nix` — uncomment the import to enable.
 
@@ -46,7 +46,6 @@ a single flake.
 │   │   ├── noctalia.nix           # noctalia-shell: bar + notifications + launcher + wallpaper + clipboard; settings.json
 │   │   ├── rofi.nix               # rofi: launcher/powermenu/cheatsheet/clipboard themes + modes
 │   │   ├── cliphist.nix           # cliphist + wl-clipboard (used by noctalia clipboard history)
-│   │   └── waypaper.nix           # (unused — superseded by noctalia wallpaper engine)
 │   └── system/
 │       └── steam.nix              # SYSTEM: programs.steam (Remote Play firewall, $HOME launch fix)
 ├── assets/                        # wallpapers / images referenced by configs (kitty bg, etc.)
@@ -159,8 +158,6 @@ edit-nix          # jump to /etc/nixos and edit flake.nix via sudoedit (uses $ED
 nixRebuildStatus  # show an in-progress/stuck activation (transient unit + procs)
 nixRebuildKill    # abort a stuck activation and free its unit name
 weston            # start the desktop: weston --fullscreen -- niri (weston → niri nested)
-niri-session      # start niri standalone (bypasses weston, connects directly to WSLg)
-ff                # launch firefox detached from the shell
 ez                # eza long listing (icons, git, octal perms, dirs first)
 ```
 
@@ -258,7 +255,6 @@ weston is configured with `kiosk-shell.so` so niri fills the entire output with 
 | `noctalia.nix` | noctalia-shell — bar, notifications, app launcher, wallpaper engine, clipboard history; declarative `settings.json` via `home.file` |
 | `rofi.nix` | rofi launcher + powermenu (`niri msg action quit`) + clipboard picker (cliphist) + cheatsheet |
 | `cliphist.nix` | enables `services.cliphist` systemd user service + `wl-clipboard`; noctalia also runs its own `wl-paste --watch` commands (redundant, both populate the cliphist store) |
-| `waypaper.nix` | unused — superseded by noctalia's wallpaper engine |
 
 ### Keybinds (`$mod` = **Alt**)
 
@@ -468,8 +464,6 @@ Sources and inspiration for the desktop configs:
 | niri IPC schema | https://github.com/YaLTeR/niri/blob/main/niri-ipc/src/lib.rs |
 | awesome-niri (tool list) | https://github.com/niri-wm/awesome-niri |
 | xwayland-satellite | https://github.com/Supreeeme/xwayland-satellite |
-| waypaper *(superseded by noctalia)* | https://github.com/anufrievroman/waypaper |
-| awww *(superseded by noctalia)* | https://codeberg.org/LGFae/awww |
 
 ### Rice / theming
 

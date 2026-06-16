@@ -47,9 +47,6 @@
       # socket directly (winit/wayland-rs incompatibility). weston acts as the
       # intermediate compositor, then niri nests inside it.
       weston = "weston --fullscreen -- niri";
-      niri-session = "niri-session";
-      # Launch Firefox detached from the shell (survives terminal close, no output spam)
-      ff = "setsid firefox-devedition >/dev/null 2>&1 < /dev/null &";
       # Show an in-progress/stuck activation (transient unit + related procs)
       nixRebuildStatus = "systemctl --no-pager status nixos-rebuild-switch-to-configuration.service 2>/dev/null; pgrep -af 'nixos-rebuild|switch-to-configuration' || echo 'no rebuild running'";
       # Abort a stuck activation: stop the transient unit and free its name
