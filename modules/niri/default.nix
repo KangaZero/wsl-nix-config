@@ -19,10 +19,7 @@ in
 {
   imports = [
     ./rofi.nix
-    ./mako.nix
-    ./waybar.nix
-    ./cliphist.nix
-    ./waypaper.nix
+    ./noctalia.nix
   ];
 
   xdg.configFile."niri/config.kdl".text = ''
