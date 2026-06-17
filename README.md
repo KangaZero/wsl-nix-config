@@ -4,7 +4,7 @@
 
 > **Archived -- No Longer in use!**
 >
-> `Archived in favor of` [unified-multi-platform-nix-config](https://github.com/KangaZero/nix-config). This config is only confirmed to work at **2026/6/17**.
+> `Archived in favor of` [unified-multi-platform-nix-config](https://github.com/KangaZero/nix-config). This config is only confirmed to work up until **2026/6/17**.
 >
 
 ---
