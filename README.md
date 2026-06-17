@@ -1,3 +1,11 @@
+---
+
+> **Archived -- No Longer in use!**
+>
+> `Archived in favor of` [unified-multi-platform-nix-config](https://github.com/KangaZero/nix-config). This config is only confirmed to work at **2026/6/17**.
+>
+---
+
 # WSL NixOS + Home-Manager Flake
 
 KangaZero's system + dotfile flake. Runs on **NixOS-WSL** (WSL2). The whole
